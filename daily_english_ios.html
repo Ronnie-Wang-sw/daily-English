@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="每日英文">
+<title>每日英文學習</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#F5F2EB;--card:#fff;--nb:#FDF6E3;--nb-bd:#C8A97E;--nb-sh:#B8956A;--nb-dash:#D4B896;--nb-hl:#FFF0CC;--nb-row:#E8D8B8;--nb-prog:#F5C842;--accent:#378ADD;--text:#1A1A1A;--text2:#5A4A3A;--text3:#9A8A7A;--green-bg:#EAF3DE;--green:#27500A;--green-bd:#97C459;--red:#E53030;--ex:#3A6A3A;--pos-bg:#E8D8B8;--pos:#7A5A3A}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,'Noto Sans TC',sans-serif;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:16px 16px 40px;max-width:560px;margin:0 auto}
+.screen.on{display:block}
+
+/* HOME */
+.hdr{text-align:center;padding:24px 0 16px}
+.hdr-ico{font-size:44px;margin-bottom:10px}
+.hdr-title{font-size:22px;font-weight:700;color:var(--text)}
+.hdr-sub{font-size:13px;color:var(--text3);margin-top:3px}
+.pill{display:inline-block;font-size:11px;padding:3px 12px;border-radius:20px;background:#EEEDFE;color:#3C3489;font-weight:600;margin-top:6px}
+.stats{display:flex;gap:10px;margin:14px 0}
+.stat{flex:1;background:var(--card);border:0.5px solid #E0D8CC;border-radius:14px;padding:12px 14px}
+.stat-ico{font-size:20px;margin-bottom:4px}
+.stat-n{font-size:21px;font-weight:600;color:var(--text)}
+.stat-l{font-size:11px;color:var(--text3);margin-top:1px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tc{background:var(--card);border:1px solid #E0D8CC;border-radius:16px;padding:16px 14px;cursor:pointer;text-align:left;width:100%;touch-action:manipulation;transition:transform .12s}
+.tc:active{transform:scale(0.96)}
+.tc.today{border:2.5px solid var(--accent)}
+.tc.done{opacity:.6}
+.tc-ico{font-size:28px;margin-bottom:6px}
+.tc-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px}
+.tc-cnt{font-size:11px;color:var(--text3)}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;margin-top:5px}
+.b-today{background:#E6F1FB;color:#0C447C}
+.b-done{background:var(--green-bg);color:var(--green)}
+.b-lock{background:#EEECEA;color:#AAA}
+
+/* LEARN */
+.l-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{background:var(--card);border:0.5px solid #E0D8CC;border-radius:10px;padding:10px 16px;font-size:14px;color:var(--text2);cursor:pointer;font-family:inherit;min-height:44px;font-weight:500;touch-action:manipulation;display:flex;align-items:center;gap:6px}
+.back:active{opacity:.7}
+.l-name{font-size:15px;font-weight:600;color:var(--text)}
+
+/* NOTEBOOK */
+.nb{background:var(--nb);border-radius:16px;border:2.5px solid var(--nb-bd);box-shadow:4px 4px 0 var(--nb-sh)}
+.rings{display:flex;justify-content:space-around;padding:0 18px;margin-top:-1px}
+.ring{width:18px;height:26px;border:3px solid #A0856A;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#CBA87A;margin-top:-10px}
+.nb-hd{text-align:center;padding:6px 16px 12px;border-bottom:2px dashed var(--nb-dash)}
+.nb-hd-ico{font-size:24px;margin-bottom:3px}
+.nb-hd-zh{font-size:18px;font-weight:700;color:#2A1A0A}
+.nb-hd-en{font-size:12px;color:#8A6A4A;margin-top:2px}
+.nb-ctrl{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--nb-dash);flex-wrap:wrap}
+.cbtn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:20px;border:1.5px solid var(--nb-bd);background:#FFF8EC;color:#7A5A3A;font-size:13px;cursor:pointer;font-family:inherit;min-height:46px;font-weight:500;touch-action:manipulation;white-space:nowrap}
+.cbtn:active{opacity:.7}
+.cbtn.on{background:var(--nb-prog);border-color:#C8A800;color:#3A2A00}
+.spd{font-size:13px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--nb-bd);background:#FFF8EC;color:#5A3A1A;font-family:inherit;cursor:pointer;margin-left:auto;min-height:46px;font-weight:500}
+.prog-wrap{height:4px;background:var(--nb-dash);margin:6px 14px 0;border-radius:2px;overflow:hidden}
+.prog-bar{height:100%;width:0%;background:var(--nb-prog);border-radius:2px;transition:width .4s}
+.nb-list{padding:4px 0}
+.row{display:flex;align-items:flex-start;gap:6px;padding:13px 14px 13px 10px;border-bottom:1px solid var(--nb-row);cursor:pointer;touch-action:manipulation;min-height:62px;transition:background .12s;-webkit-user-select:none;user-select:none}
+.row:active{background:#FFE8A8}
+.row.on{background:var(--nb-hl)}
+.arr{font-size:15px;color:var(--red);width:20px;text-align:center;flex-shrink:0;margin-top:3px;opacity:0;transition:opacity .2s}
+.row.on .arr{opacity:1}
+.ml{font-size:22px;flex-shrink:0;width:30px;text-align:center;margin-top:1px}
+.rc{flex:1;min-width:0}
+.rmain{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.rnum{color:var(--nb-bd);margin-right:2px}
+.rpos{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--pos-bg);color:var(--pos);margin-left:5px;font-weight:500;vertical-align:middle}
+.rzh{font-size:12px;color:var(--text2);margin-top:3px}
+.rex{font-size:12px;color:var(--ex);font-style:italic;margin-top:4px;line-height:1.5;display:none}
+.rexzh{font-size:11px;color:#7A7A3A;margin-top:2px;line-height:1.4;display:none}
+.row.on .rex,.row.on .rexzh{display:block}
+.sc{font-size:20px;flex-shrink:0;width:26px;text-align:center;margin-top:2px;opacity:.3;transition:opacity .2s}
+.row.on .sc{opacity:1}
+.nb-foot{text-align:center;font-size:10px;color:#B8986A;padding:10px 0 6px;letter-spacing:1.5px}
+.done-box{background:var(--green-bg);border:0.5px solid var(--green-bd);border-radius:14px;padding:18px;text-align:center;margin-top:14px}
+.done-ico{font-size:30px;margin-bottom:6px}
+.done-title{font-size:15px;font-weight:600;color:var(--green)}
+.done-sub{font-size:12px;color:#3B6D11;margin-top:3px}
+
+/* iOS hint banner */
+.ios-hint{background:#fff;border:1px solid #E0D8CC;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center}
+.ios-hint-ico{font-size:28px;flex-shrink:0}
+.ios-hint-txt{font-size:13px;color:#555;line-height:1.5}
+.ios-hint-txt b{color:#111}
+.ios-close{background:none;border:none;font-size:18px;color:#BBB;cursor:pointer;padding:4px;margin-left:auto;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div id="home" class="screen on">
+  <div class="hdr">
+    <div class="hdr-ico">📖</div>
+    <div class="hdr-title">每日英文學習</div>
+    <div class="hdr-sub">Daily English — 每天一主題，累積中級單字</div>
+    <div class="pill">中級 Intermediate</div>
+  </div>
+  <div id="ios-hint" class="ios-hint">
+    <div class="ios-hint-ico">📲</div>
+    <div class="ios-hint-txt">想像 App 一樣使用？點 Safari 底部<b>分享</b>→<b>加入主畫面</b></div>
+    <button class="ios-close" onclick="document.getElementById('ios-hint').style.display='none'">✕</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-ico">🔥</div><div class="stat-n">1 天</div><div class="stat-l">連續學習</div></div>
+    <div class="stat"><div class="stat-ico">📚</div><div class="stat-n" id="s-words">0</div><div class="stat-l">已學單字</div></div>
+    <div class="stat"><div class="stat-ico">✅</div><div class="stat-n" id="s-done">0/7</div><div class="stat-l">完成主題</div></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="learn" class="screen">
+  <div class="l-top">
+    <button class="back" id="back">← 返回</button>
+    <span id="l-ico" style="font-size:20px"></span>
+    <span class="l-name" id="l-name"></span>
+  </div>
+  <div class="nb">
+    <div class="rings" id="rings"></div>
+    <div class="nb-hd">
+      <div class="nb-hd-ico" id="nb-ico"></div>
+      <div class="nb-hd-zh" id="nb-zh"></div>
+      <div class="nb-hd-en" id="nb-en"></div>
+    </div>
+    <div class="nb-ctrl">
+      <button class="cbtn" id="play">▶ 自動播放</button>
+      <button class="cbtn" id="rst">↺ 重設</button>
+      <select class="spd" id="spd">
+        <option value="3000">慢速</option>
+        <option value="2200" selected>正常</option>
+        <option value="1400">快速</option>
+      </select>
+    </div>
+    <div class="prog-wrap"><div class="prog-bar" id="prog"></div></div>
+    <div class="nb-list" id="nb-list"></div>
+    <div class="nb-foot">✦ Daily English — Intermediate ✦</div>
+  </div>
+  <div class="done-box" id="done-box" style="display:none">
+    <div class="done-ico">🎉</div>
+    <div class="done-title">今日主題完成！</div>
+    <div class="done-sub">繼續選擇其他主題，或明天挑戰新主題</div>
+  </div>
+</div>
+
+<script>
+const T=[
+  {id:"workplace",icon:"💼",name:"職場溝通",en:"Workplace Communication",words:[
+    {en:"Collaborate",pos:"v.",zh:"合作、協作",ex:"We need to collaborate with other departments to finish the project.",exZh:"我們需要與其他部門合作完成這個專案。",ml:"🤝",sc:"👥"},
+    {en:"Initiative",pos:"n.",zh:"主動性；新方案",ex:"She took the initiative to redesign the entire workflow.",exZh:"她主動重新設計了整個工作流程。",ml:"🚀",sc:"💡"},
+    {en:"Delegate",pos:"v.",zh:"授權、指派",ex:"A good manager knows how to delegate tasks effectively.",exZh:"一位好的主管知道如何有效地授權。",ml:"📋",sc:"👔"},
+    {en:"Consensus",pos:"n.",zh:"共識",ex:"We reached a consensus after a long discussion.",exZh:"經過長時間討論後，我們達成了共識。",ml:"🗣️",sc:"✅"},
+    {en:"Proactive",pos:"adj.",zh:"積極主動的",ex:"Being proactive is a key trait for career growth.",exZh:"積極主動是職涯成長的重要特質。",ml:"⚡",sc:"🌟"},
+    {en:"Accountability",pos:"n.",zh:"責任感、當責",ex:"Accountability means owning your mistakes and fixing them.",exZh:"當責意味著承擔錯誤並加以改正。",ml:"🎯",sc:"⚖️"},
+    {en:"Streamline",pos:"v.",zh:"簡化、精簡",ex:"We streamlined the approval process to save time.",exZh:"我們精簡了審批流程以節省時間。",ml:"⚙️",sc:"🔧"},
+    {en:"Deadline",pos:"n.",zh:"截止日期",ex:"Missing a deadline can damage your professional reputation.",exZh:"錯過截止日期會損害你的職業聲譽。",ml:"📅",sc:"⏰"},
+    {en:"Constructive",pos:"adj.",zh:"有建設性的",ex:"Please give constructive feedback, not just criticism.",exZh:"請給予有建設性的意見，而不只是批評。",ml:"🔨",sc:"💬"},
+    {en:"Agenda",pos:"n.",zh:"議程",ex:"Could you send me the meeting agenda in advance?",exZh:"可以提前把會議議程寄給我嗎？",ml:"📝",sc:"📊"}
+  ]},
+  {id:"travel",icon:"🌍",name:"旅遊出行",en:"Travel & Transportation",words:[
+    {en:"Itinerary",pos:"n.",zh:"行程表",ex:"Our travel itinerary includes five cities in two weeks.",exZh:"我們的行程包括兩週內走訪五個城市。",ml:"🗺️",sc:"✈️"},
+    {en:"Accommodation",pos:"n.",zh:"住宿",ex:"We booked budget accommodation near the city center.",exZh:"我們在市中心附近訂了平價住宿。",ml:"🏨",sc:"🛏️"},
+    {en:"Layover",pos:"n.",zh:"中途停留、過境",ex:"We have a three-hour layover in Tokyo.",exZh:"我們在東京有三小時的中途停留。",ml:"🛫",sc:"⏳"},
+    {en:"Scenic",pos:"adj.",zh:"風景優美的",ex:"The train ride offers a scenic view of the mountains.",exZh:"這段火車旅程提供了壯觀的山景。",ml:"🏔️",sc:"😍"},
+    {en:"Cruise",pos:"n.",zh:"郵輪旅行",ex:"They celebrated their anniversary on a Mediterranean cruise.",exZh:"他們在地中海郵輪上慶祝週年紀念日。",ml:"🚢",sc:"🌊"},
+    {en:"Vicinity",pos:"n.",zh:"附近地區",ex:"There are several great restaurants in the vicinity of our hotel.",exZh:"我們飯店附近有幾家很棒的餐廳。",ml:"📍",sc:"🗺️"},
+    {en:"Turbulence",pos:"n.",zh:"亂流",ex:"Please fasten your seatbelt due to turbulence.",exZh:"由於亂流，請繫好安全帶。",ml:"✈️",sc:"😬"},
+    {en:"Expedition",pos:"n.",zh:"探險；遠征",ex:"They went on an expedition to the Amazon rainforest.",exZh:"他們前往亞馬遜雨林進行探險。",ml:"🧭",sc:"🌿"},
+    {en:"Souvenir",pos:"n.",zh:"紀念品",ex:"She bought a handmade souvenir at the local market.",exZh:"她在當地市集買了一個手工紀念品。",ml:"🎁",sc:"🛍️"},
+    {en:"Backpacker",pos:"n.",zh:"背包客",ex:"As a backpacker, she preferred hostels over hotels.",exZh:"身為背包客，她喜歡住青年旅館而非飯店。",ml:"🎒",sc:"🗺️"}
+  ]},
+  {id:"health",icon:"🏥",name:"健康醫療",en:"Health & Medicine",words:[
+    {en:"Diagnose",pos:"v.",zh:"診斷",ex:"The doctor diagnosed him with high blood pressure.",exZh:"醫生診斷他患有高血壓。",ml:"🩺",sc:"👨‍⚕️"},
+    {en:"Chronic",pos:"adj.",zh:"慢性的、長期的",ex:"Diabetes is a chronic disease that requires ongoing care.",exZh:"糖尿病是一種需要持續照護的慢性疾病。",ml:"📊",sc:"⏳"},
+    {en:"Symptom",pos:"n.",zh:"症狀",ex:"Fatigue and dizziness are common symptoms of anemia.",exZh:"疲勞和頭暈是貧血的常見症狀。",ml:"🌡️",sc:"😷"},
+    {en:"Prescription",pos:"n.",zh:"處方箋",ex:"You need a prescription to buy this medication.",exZh:"購買這種藥物需要處方箋。",ml:"💊",sc:"📝"},
+    {en:"Immune system",pos:"n.",zh:"免疫系統",ex:"Exercise helps strengthen your immune system.",exZh:"運動有助於增強你的免疫系統。",ml:"🛡️",sc:"💪"},
+    {en:"Metabolism",pos:"n.",zh:"新陳代謝",ex:"A faster metabolism helps you burn calories more quickly.",exZh:"較快的新陳代謝幫助你更快燃燒卡路里。",ml:"🔥",sc:"⚡"},
+    {en:"Recuperate",pos:"v.",zh:"恢復健康",ex:"It took him two months to fully recuperate after surgery.",exZh:"他術後花了兩個月才完全康復。",ml:"🌿",sc:"🏡"},
+    {en:"Consultation",pos:"n.",zh:"問診；諮詢",ex:"I scheduled a consultation with a nutritionist.",exZh:"我預約了與營養師的諮詢。",ml:"📋",sc:"🩺"},
+    {en:"Inflammation",pos:"n.",zh:"發炎",ex:"Inflammation in the joints causes pain and stiffness.",exZh:"關節發炎會引起疼痛和僵硬。",ml:"🔴",sc:"😣"},
+    {en:"Well-being",pos:"n.",zh:"身心健康",ex:"Mental well-being is just as important as physical health.",exZh:"心理健康與身體健康同樣重要。",ml:"🌸",sc:"😊"}
+  ]},
+  {id:"finance",icon:"💰",name:"財務理財",en:"Finance & Money",words:[
+    {en:"Budget",pos:"v./n.",zh:"編列預算；預算",ex:"We need to budget carefully for the renovation.",exZh:"我們需要謹慎地為裝修編列預算。",ml:"📊",sc:"💵"},
+    {en:"Mortgage",pos:"n.",zh:"房屋貸款",ex:"They took out a 30-year mortgage to buy their home.",exZh:"他們申請了30年期房貸來購屋。",ml:"🏠",sc:"🏦"},
+    {en:"Portfolio",pos:"n.",zh:"投資組合",ex:"Diversifying your portfolio reduces financial risk.",exZh:"多元化你的投資組合可降低財務風險。",ml:"📈",sc:"💼"},
+    {en:"Inflation",pos:"n.",zh:"通貨膨脹",ex:"High inflation reduces the purchasing power of money.",exZh:"高通膨會降低貨幣的購買力。",ml:"📉",sc:"😟"},
+    {en:"Dividend",pos:"n.",zh:"股息、股利",ex:"The company pays quarterly dividends to its shareholders.",exZh:"公司每季向股東支付股利。",ml:"💹",sc:"😊"},
+    {en:"Liability",pos:"n.",zh:"負債；法律責任",ex:"Personal loans are considered liabilities on your balance sheet.",exZh:"個人貸款在資產負債表上被視為負債。",ml:"⚖️",sc:"📋"},
+    {en:"Compound interest",pos:"n.",zh:"複利",ex:"Compound interest makes savings grow exponentially over time.",exZh:"複利使儲蓄隨時間呈指數增長。",ml:"📈",sc:"⏳"},
+    {en:"Surplus",pos:"n.",zh:"盈餘、剩餘",ex:"The government reported a budget surplus this year.",exZh:"政府今年公布了財政盈餘。",ml:"💚",sc:"✅"},
+    {en:"Frugal",pos:"adj.",zh:"節儉的",ex:"Living a frugal lifestyle allowed her to retire early.",exZh:"節儉的生活方式讓她提早退休。",ml:"🏦",sc:"😌"},
+    {en:"Asset",pos:"n.",zh:"資產",ex:"Real estate is considered a long-term asset.",exZh:"房地產被認為是一種長期資產。",ml:"🏡",sc:"📊"}
+  ]},
+  {id:"social",icon:"🗣️",name:"社交對話",en:"Social Conversations",words:[
+    {en:"Empathize",pos:"v.",zh:"感同身受、同理",ex:"A good leader empathizes with their team members.",exZh:"一個好的領導者能夠與團隊成員感同身受。",ml:"❤️",sc:"🤝"},
+    {en:"Tactful",pos:"adj.",zh:"圓融的、有技巧的",ex:"She was tactful in telling him the bad news.",exZh:"她很圓融地告訴了他這個壞消息。",ml:"🎭",sc:"😊"},
+    {en:"Reciprocate",pos:"v.",zh:"回報、互惠",ex:"If someone helps you, always try to reciprocate.",exZh:"如果有人幫助你，要盡力回報。",ml:"🔄",sc:"🤝"},
+    {en:"Assertive",pos:"adj.",zh:"自信果斷的",ex:"Being assertive means expressing your needs clearly and respectfully.",exZh:"果斷意味著清晰且尊重地表達自己的需求。",ml:"💪",sc:"🗣️"},
+    {en:"Ambiguous",pos:"adj.",zh:"模糊的、有歧義的",ex:"His reply was ambiguous, so I was not sure what he meant.",exZh:"他的回覆很模糊，所以我不確定他的意思。",ml:"❓",sc:"🤔"},
+    {en:"Rapport",pos:"n.",zh:"融洽關係",ex:"Building rapport with clients is essential in sales.",exZh:"與客戶建立融洽關係在銷售中非常重要。",ml:"🌟",sc:"🤝"},
+    {en:"Persuasive",pos:"adj.",zh:"有說服力的",ex:"Her persuasive speech convinced everyone in the room.",exZh:"她有說服力的演講說服了房間裡的每個人。",ml:"🎤",sc:"👏"},
+    {en:"Anecdote",pos:"n.",zh:"趣聞、小故事",ex:"He shared a funny anecdote about his first day at work.",exZh:"他分享了一個關於第一天上班的有趣故事。",ml:"📖",sc:"😄"},
+    {en:"Etiquette",pos:"n.",zh:"禮節、禮儀",ex:"Learning dining etiquette is important when doing business abroad.",exZh:"在海外做生意時，學習餐桌禮儀很重要。",ml:"🍽️",sc:"👔"},
+    {en:"Eloquent",pos:"adj.",zh:"口才好的、雄辯的",ex:"She gave an eloquent speech at the graduation ceremony.",exZh:"她在畢業典禮上發表了一篇精彩的演講。",ml:"🎓",sc:"🌟"}
+  ]},
+  {id:"technology",icon:"💻",name:"科技數位",en:"Technology & Digital Life",words:[
+    {en:"Algorithm",pos:"n.",zh:"演算法",ex:"Social media platforms use algorithms to curate your feed.",exZh:"社群媒體平台使用演算法來安排你的動態消息。",ml:"🤖",sc:"📱"},
+    {en:"Encrypt",pos:"v.",zh:"加密",ex:"All messages on this app are fully encrypted.",exZh:"此應用程式上的所有訊息都經過完整加密。",ml:"🔐",sc:"🛡️"},
+    {en:"Bandwidth",pos:"n.",zh:"頻寬",ex:"Streaming 4K video requires a lot of bandwidth.",exZh:"串流4K影片需要大量頻寬。",ml:"📡",sc:"💻"},
+    {en:"Interface",pos:"n.",zh:"介面",ex:"The new interface is more intuitive than the previous version.",exZh:"新介面比舊版更直觀。",ml:"🖥️",sc:"👆"},
+    {en:"Automation",pos:"n.",zh:"自動化",ex:"Automation is replacing many repetitive jobs in manufacturing.",exZh:"自動化正在取代製造業中許多重複性工作。",ml:"⚙️",sc:"🏭"},
+    {en:"Cybersecurity",pos:"n.",zh:"網路安全",ex:"Cybersecurity is a top priority for any modern business.",exZh:"網路安全是任何現代企業的首要任務。",ml:"🛡️",sc:"💻"},
+    {en:"Obsolete",pos:"adj.",zh:"過時的、已淘汰的",ex:"Fax machines are becoming obsolete in the digital age.",exZh:"在數位時代，傳真機正逐漸被淘汰。",ml:"📠",sc:"🗑️"},
+    {en:"Prototype",pos:"n.",zh:"原型",ex:"Engineers built a prototype before mass production.",exZh:"工程師在量產前建立了一個原型。",ml:"🔨",sc:"🧪"},
+    {en:"Vulnerable",pos:"adj.",zh:"易受攻擊的；脆弱的",ex:"Outdated software makes your computer vulnerable to attacks.",exZh:"過時的軟體使你的電腦容易受到攻擊。",ml:"⚠️",sc:"🔓"},
+    {en:"Subscription",pos:"n.",zh:"訂閱制",ex:"The app switched from one-time purchase to a subscription model.",exZh:"該應用程式從一次性購買改為訂閱制。",ml:"📲",sc:"💳"}
+  ]},
+  {id:"environment",icon:"🌿",name:"環境生態",en:"Environment & Nature",words:[
+    {en:"Sustainable",pos:"adj.",zh:"永續的、可持續的",ex:"We must adopt sustainable practices to protect the planet.",exZh:"我們必須採用永續做法來保護地球。",ml:"♻️",sc:"🌍"},
+    {en:"Emission",pos:"n.",zh:"排放（量）",ex:"Carbon emissions from factories contribute to global warming.",exZh:"工廠排放的碳對全球暖化有所影響。",ml:"🏭",sc:"💨"},
+    {en:"Biodiversity",pos:"n.",zh:"生物多樣性",ex:"Deforestation threatens the biodiversity of tropical forests.",exZh:"砍伐森林威脅熱帶雨林的生物多樣性。",ml:"🦋",sc:"🌳"},
+    {en:"Renewable",pos:"adj.",zh:"可再生的",ex:"Solar and wind are popular sources of renewable energy.",exZh:"太陽能和風能是常見的可再生能源。",ml:"☀️",sc:"💚"},
+    {en:"Contaminate",pos:"v.",zh:"污染",ex:"Industrial waste contaminated the nearby river.",exZh:"工業廢料污染了附近的河流。",ml:"☣️",sc:"😟"},
+    {en:"Ecosystem",pos:"n.",zh:"生態系統",ex:"Coral reefs are among the most complex ecosystems on Earth.",exZh:"珊瑚礁是地球上最複雜的生態系統之一。",ml:"🪸",sc:"🐠"},
+    {en:"Drought",pos:"n.",zh:"旱災",ex:"The prolonged drought has severely affected crop production.",exZh:"長期乾旱嚴重影響了農作物的生產。",ml:"🌵",sc:"☀️"},
+    {en:"Conservation",pos:"n.",zh:"保育、保護",ex:"Wildlife conservation efforts have helped many species recover.",exZh:"野生動物保育努力幫助許多物種恢復。",ml:"🐘",sc:"🌿"},
+    {en:"Carbon footprint",pos:"n.",zh:"碳足跡",ex:"Flying frequently increases your personal carbon footprint.",exZh:"頻繁搭飛機會增加你的個人碳足跡。",ml:"👣",sc:"✈️"},
+    {en:"Deforestation",pos:"n.",zh:"森林砍伐",ex:"Deforestation for agriculture destroys natural habitats.",exZh:"農業開墾造成的砍伐破壞了天然棲息地。",ml:"🌲",sc:"🪓"}
+  ]}
+];
+
+const TODAY=new Date().getDay()%T.length;
+const done=new Set();
+let topic=null,active=-1,playing=false,ptimer=null;
+
+function $(id){return document.getElementById(id)}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0)}
+
+function speak(w){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const getV=()=>{const vs=speechSynthesis.getVoices();return vs.find(v=>v.lang==='en-US'&&/samantha|zira|aria|jenny|guy/i.test(v.name))||vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'))};
+  const say=()=>{const v=getV();const u1=new SpeechSynthesisUtterance(w.en);u1.lang='en-US';u1.rate=0.8;if(v)u1.voice=v;const g=new SpeechSynthesisUtterance(' ');g.volume=0;const u2=new SpeechSynthesisUtterance(w.ex);u2.lang='en-US';u2.rate=0.85;if(v)u2.voice=v;speechSynthesis.speak(u1);speechSynthesis.speak(g);speechSynthesis.speak(u2)};
+  if(!speechSynthesis.getVoices().length){speechSynthesis.onvoiceschanged=()=>{say();speechSynthesis.onvoiceschanged=null}}else say()
+}
+
+function buildHome(){
+  const g=$('grid');g.innerHTML='';
+  let tw=0,td=0;
+  T.forEach((t,i)=>{
+    const isT=i===TODAY,isDone=done.has(t.id);
+    if(isDone){tw+=t.words.length;td++}
+    const c=document.createElement('button');
+    c.className='tc'+(isT?' today':'')+(isDone?' done':'');
+    c.innerHTML=`<div class="tc-ico">${t.icon}</div><div class="tc-name">${t.name}</div><div class="tc-cnt">${t.words.length} 個單字</div>`
+      +(isT?'<div class="badge b-today">今日主題</div>':isDone?'<div class="badge b-done">✓ 已完成</div>':`<div class="badge b-lock">第 ${i+1} 天</div>`);
+    c.addEventListener('click',()=>openTopic(t));
+    g.appendChild(c);
+  });
+  $('s-words').textContent=tw;
+  $('s-done').textContent=td+'/7';
+}
+
+function openTopic(t){
+  topic=t;active=-1;playing=false;
+  clearTimeout(ptimer);speechSynthesis&&speechSynthesis.cancel();
+  $('l-ico').textContent=t.icon;$('l-name').textContent=t.name;
+  $('nb-ico').textContent=t.icon;$('nb-zh').textContent=t.name;$('nb-en').textContent=t.en;
+  $('done-box').style.display='none';
+  $('play').textContent='▶ 自動播放';$('play').classList.remove('on');
+  $('prog').style.width='0%';
+  buildRings();buildList();show('learn');
+}
+
+function buildRings(){const r=$('rings');r.innerHTML='';for(let i=0;i<10;i++)r.innerHTML+='<div class="ring"></div>'}
+
+function buildList(){
+  const l=$('nb-list');l.innerHTML='';
+  topic.words.forEach((w,i)=>{
+    const row=document.createElement('div');
+    row.className='row';row.id='r'+i;
+    row.innerHTML=`<div class="arr">➤</div><div class="ml">${w.ml}</div><div class="rc"><div class="rmain"><span class="rnum">${i+1}.</span>${w.en}<span class="rpos">${w.pos}</span></div><div class="rzh">${w.zh}</div><div class="rex">${w.ex}</div><div class="rexzh">${w.exZh}</div></div><div class="sc">${w.sc}</div>`;
+    row.addEventListener('click',()=>sel(i));
+    l.appendChild(row);
+  });
+}
+
+function sel(i){
+  document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));
+  const row=$('r'+i);if(row){row.classList.add('on');row.scrollIntoView({behavior:'smooth',block:'nearest'})}
+  active=i;
+  $('prog').style.width=Math.round(((i+1)/topic.words.length)*100)+'%';
+  speak(topic.words[i]);
+}
+
+function stopPlay(){
+  playing=false;clearTimeout(ptimer);speechSynthesis&&speechSynthesis.cancel();
+  $('play').textContent='▶ 自動播放';$('play').classList.remove('on');
+}
+
+function togglePlay(){
+  playing=!playing;
+  if(playing){$('play').textContent='⏸ 暫停';$('play').classList.add('on');pNext(active)}
+  else stopPlay();
+}
+
+function pNext(from){
+  if(!playing)return;
+  const n=from+1;
+  if(n>=topic.words.length){stopPlay();done.add(topic.id);$('done-box').style.display='block';$('done-box').scrollIntoView({behavior:'smooth',block:'nearest'});return}
+  sel(n);
+  ptimer=setTimeout(()=>pNext(n),parseInt($('spd').value)+1600);
+}
+
+$('back').addEventListener('click',()=>{stopPlay();show('home');buildHome()});
+$('play').addEventListener('click',togglePlay);
+$('rst').addEventListener('click',()=>{stopPlay();active=-1;document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));$('prog').style.width='0%';$('done-box').style.display='none'});
+
+buildHome();
+</script>
+</body>
+</html>
