@@ -578,11 +578,35 @@ let topic = null, active = -1, playing = false, ptimer = null;
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0)}
 
-function speak(w){
-  if(!window.speechSynthesis)return;
+let speakToken = 0; // 用來識別「目前這輪」朗讀，避免舊的callback在切換後還搶著播放
+
+function speak(w, onDone){
+  const myToken = ++speakToken; // 每次呼叫都視為新的一輪，舊的一律作廢
+  if(!window.speechSynthesis){ if(onDone) onDone(); return; }
   speechSynthesis.cancel();
   const getV=()=>{const vs=speechSynthesis.getVoices();return vs.find(v=>v.lang==='en-US'&&/samantha|zira|aria|jenny|guy/i.test(v.name))||vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'))};
-  const say=()=>{const v=getV();const u1=new SpeechSynthesisUtterance(w.en);u1.lang='en-US';u1.rate=0.8;if(v)u1.voice=v;const g=new SpeechSynthesisUtterance(' ');g.volume=0;const u2=new SpeechSynthesisUtterance(w.ex);u2.lang='en-US';u2.rate=0.85;if(v)u2.voice=v;speechSynthesis.speak(u1);speechSynthesis.speak(g);speechSynthesis.speak(u2)};
+  const say=()=>{
+    const v=getV();
+    const u1=new SpeechSynthesisUtterance(w.en);
+    u1.lang='en-US';u1.rate=0.8;if(v)u1.voice=v;
+    const u2=new SpeechSynthesisUtterance(w.ex);
+    u2.lang='en-US';u2.rate=0.85;if(v)u2.voice=v;
+
+    // 等單字真的念完（onend）才接著念例句，而不是把兩句一起塞進佇列，
+    // 這是 iOS Safari 上語音佇列容易「亂跳/搶播」的主因
+    u1.onend=()=>{
+      if(myToken!==speakToken)return; // 已經切到別的單字了，這輪作廢
+      setTimeout(()=>{
+        if(myToken!==speakToken)return;
+        speechSynthesis.speak(u2);
+      },350);
+    };
+    u1.onerror=()=>{ if(myToken===speakToken&&onDone) onDone(); };
+    u2.onend=()=>{ if(myToken===speakToken&&onDone) onDone(); };
+    u2.onerror=()=>{ if(myToken===speakToken&&onDone) onDone(); };
+
+    speechSynthesis.speak(u1);
+  };
   if(!speechSynthesis.getVoices().length){speechSynthesis.onvoiceschanged=()=>{say();speechSynthesis.onvoiceschanged=null}}else say();
 }
 
@@ -632,21 +656,21 @@ function buildList(){
     const row=document.createElement('div');
     row.className='row';row.id='r'+i;
     row.innerHTML=`<div class="arr">➤</div><div class="ml">${w.ml}</div><div class="rc"><div class="rmain"><span class="rnum">${i+1}.</span>${w.en}<span class="rpos">${w.pos}</span></div><div class="rzh">${w.zh}</div><div class="rex">${w.ex}</div><div class="rexzh">${w.exZh}</div></div><div class="sc">${w.sc}</div>`;
-    row.addEventListener('click',()=>sel(i));
+    row.addEventListener('click',()=>{if(playing)stopPlay();sel(i)});
     l.appendChild(row);
   });
 }
 
-function sel(i){
+function sel(i, onDone){
   document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));
   const row=$('r'+i);if(row){row.classList.add('on');row.scrollIntoView({behavior:'smooth',block:'nearest'})}
   active=i;
   $('prog').style.width=Math.round(((i+1)/topic.words.length)*100)+'%';
-  speak(topic.words[i]);
+  speak(topic.words[i], onDone);
 }
 
 function stopPlay(){
-  playing=false;clearTimeout(ptimer);speechSynthesis&&speechSynthesis.cancel();
+  playing=false;clearTimeout(ptimer);speakToken++;speechSynthesis&&speechSynthesis.cancel();
   $('play').textContent='▶ 自動播放';$('play').classList.remove('on');
 }
 
@@ -659,7 +683,20 @@ function togglePlay(){
 function pNext(from){
   if(!playing)return;
   const n=from+1;
-  if(n>=topic.words.length){stopPlay();done.add(topic.id);$('done-box').style.display='block';$('done-box').scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(n>=topic.words.length){
+    stopPlay();
+    done.add(topic.id);
+    $('done-box').style.display='block';
+    $('done-box').scrollIntoView({behavior:'smooth',block:'nearest'});
+    buildHome();
+    return;
+  }
+  sel(n, () => {
+    if(!playing) return;
+    ptimer = setTimeout(() => pNext(n), parseInt($('spd').value));
+  });
+}
+
 // ── CALENDAR ──
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
@@ -741,17 +778,12 @@ $('cal-next').addEventListener('click', () => {
   buildCalendar();
 });
 
-buildHome();
-buildCalendar();return}
-  sel(n);
-  ptimer=setTimeout(()=>pNext(n),parseInt($('spd').value)+1600);
-}
-
 $('back').addEventListener('click',()=>{stopPlay();show('home');buildHome()});
 $('play').addEventListener('click',togglePlay);
 $('rst').addEventListener('click',()=>{stopPlay();active=-1;document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));$('prog').style.width='0%';$('done-box').style.display='none'});
 
 buildHome();
+buildCalendar();
 </script>
 </body>
 </html>
