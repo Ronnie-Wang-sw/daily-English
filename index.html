@@ -122,6 +122,38 @@ html,body{min-height:100%;background:#F5F2EB !important;font-family:-apple-syste
 .cal-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#9A8A7A}
 .leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ── ROOT / ETYMOLOGY ── */
+.rroot{font-size:11px;color:#5B3FA0;background:#F1ECFB;border-radius:6px;padding:3px 7px;margin-top:4px;line-height:1.5;display:inline-block}
+
+/* ── CLICKABLE WORDS IN EXAMPLES ── */
+.cw{border-bottom:1.5px dotted #3A6A3A;cursor:pointer;touch-action:manipulation}
+.cw:active{background:#FFE8A8}
+
+/* ── WORD POPUP ── */
+.wp-overlay{display:none;position:fixed;inset:0;background:rgba(20,15,5,.45);z-index:999;align-items:flex-end;justify-content:center}
+.wp-card{background:#FDF6E3;border-radius:20px 20px 0 0;border:2.5px solid #C8A97E;border-bottom:none;padding:20px 20px 26px;width:100%;max-width:560px;box-shadow:0 -4px 0 #B8956A}
+.wp-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.wp-head span:first-child{font-size:19px;font-weight:700;color:#1A1A1A}
+.wp-zh{font-size:14px;color:#3A2A1A;margin-bottom:8px}
+.wp-root{font-size:12px;color:#5B3FA0;background:#F1ECFB;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6}
+.wp-input-wrap{margin-bottom:10px}
+.wp-input-wrap input{width:100%;font-size:14px;padding:10px 12px;border-radius:10px;border:1.5px solid #C8A97E;background:#fff;font-family:inherit}
+.wp-actions{display:flex;gap:10px;margin-top:4px}
+.wp-actions .cbtn{flex:1;justify-content:center}
+.wp-added{font-size:12px;color:#27500A;background:#EAF3DE;border-radius:8px;padding:7px 10px;margin-top:10px;text-align:center}
+
+/* ── NOTEBOOK ── */
+.nb-open-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#ffffff;border:1.5px solid #378ADD;border-radius:14px;padding:12px;font-size:13px;font-weight:600;color:#0C447C;cursor:pointer;font-family:inherit;margin-bottom:14px;touch-action:manipulation}
+.nb-open-btn:active{opacity:.7}
+.nb-badge{background:#378ADD;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px;font-weight:700}
+.note-row{background:#FFF8EC;border:1px solid #E8D8B8;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.note-en{font-size:14px;font-weight:700;color:#1A1A1A}
+.note-zh{font-size:12px;color:#5A4A3A;margin-top:2px}
+.nb-empty{font-size:12px;color:#9A8A7A;text-align:center;padding:16px 0}
+.nb-gen-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:12px;padding:12px;border-radius:14px;border:1.5px solid #C8A800;background:#F5C842;color:#3A2A00;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;touch-action:manipulation}
+.nb-gen-btn:active{opacity:.7}
+.nb-gen-btn:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body style="background:#F5F2EB;font-family:-apple-system,Helvetica Neue,sans-serif;margin:0;padding:0">
@@ -141,6 +173,7 @@ html,body{min-height:100%;background:#F5F2EB !important;font-family:-apple-syste
       <div class="wb-countdown" id="week-countdown"></div>
     </div>
   </div>
+  <button class="nb-open-btn" id="open-notebook">📝 我的筆記 <span class="nb-badge" id="nb-count-badge">0</span></button>
   <div class="cal-section">
     <div class="cal-header">
       <button class="cal-nav" id="cal-prev">&#8249;</button>
@@ -197,358 +230,42 @@ html,body{min-height:100%;background:#F5F2EB !important;font-family:-apple-syste
   </div>
 </div>
 
+<div id="notebook" class="screen">
+  <div class="l-top">
+    <button class="back" id="nb-back">← 返回</button>
+    <span style="font-size:20px">📝</span>
+    <span class="l-name">我的筆記</span>
+  </div>
+  <div class="cal-section">
+    <div class="cal-title" style="margin-bottom:10px">📅 今日筆記 <span id="nb-today-date" style="font-weight:400;color:#9A8A7A;font-size:12px"></span></div>
+    <div id="nb-today-list"></div>
+  </div>
+  <div class="cal-section">
+    <div class="cal-title" style="margin-bottom:10px">🗓️ 本週筆記彙整</div>
+    <div id="nb-week-list"></div>
+    <button class="nb-gen-btn" id="nb-gen-review">📚 用本週筆記單字產生字根複習課程</button>
+  </div>
+</div>
+
+<div class="wp-overlay" id="word-pop-overlay">
+  <div class="wp-card">
+    <div class="wp-head"><span id="wp-word"></span><span class="rpos" id="wp-pos"></span></div>
+    <div class="wp-zh" id="wp-zh"></div>
+    <div class="wp-root" id="wp-root"></div>
+    <div class="wp-input-wrap" id="wp-input-wrap" style="display:none">
+      <input id="wp-input" placeholder="這本庫還沒有收錄，寫下你查到/記得的意思吧">
+    </div>
+    <div class="wp-actions">
+      <button class="cbtn on" id="wp-add">➕ 加入今日筆記</button>
+      <button class="cbtn" id="wp-close">關閉</button>
+    </div>
+    <div class="wp-added" id="wp-added-msg" style="display:none">已加入今日筆記 ✓</div>
+  </div>
+</div>
+
 <script>
 // ── 所有週次的主題資料（4週 × 7主題，共28組，可無限循環）──
-const ALL_WEEKS = [
-  // ══ 第1週 ══
-  [
-    {id:"w1_workplace",icon:"💼",name:"職場溝通",en:"Workplace Communication",words:[
-      {en:"Collaborate",pos:"v.",zh:"合作、協作",ex:"We need to collaborate with other departments to finish the project.",exZh:"我們需要與其他部門合作完成這個專案。",ml:"🤝",sc:"👥"},
-      {en:"Initiative",pos:"n.",zh:"主動性；新方案",ex:"She took the initiative to redesign the entire workflow.",exZh:"她主動重新設計了整個工作流程。",ml:"🚀",sc:"💡"},
-      {en:"Delegate",pos:"v.",zh:"授權、指派",ex:"A good manager knows how to delegate tasks effectively.",exZh:"一位好的主管知道如何有效地授權。",ml:"📋",sc:"👔"},
-      {en:"Consensus",pos:"n.",zh:"共識",ex:"We reached a consensus after a long discussion.",exZh:"經過長時間討論後，我們達成了共識。",ml:"🗣️",sc:"✅"},
-      {en:"Proactive",pos:"adj.",zh:"積極主動的",ex:"Being proactive is a key trait for career growth.",exZh:"積極主動是職涯成長的重要特質。",ml:"⚡",sc:"🌟"},
-      {en:"Accountability",pos:"n.",zh:"責任感、當責",ex:"Accountability means owning your mistakes and fixing them.",exZh:"當責意味著承擔錯誤並加以改正。",ml:"🎯",sc:"⚖️"},
-      {en:"Streamline",pos:"v.",zh:"簡化、精簡",ex:"We streamlined the approval process to save time.",exZh:"我們精簡了審批流程以節省時間。",ml:"⚙️",sc:"🔧"},
-      {en:"Deadline",pos:"n.",zh:"截止日期",ex:"Missing a deadline can damage your professional reputation.",exZh:"錯過截止日期會損害你的職業聲譽。",ml:"📅",sc:"⏰"},
-      {en:"Constructive",pos:"adj.",zh:"有建設性的",ex:"Please give constructive feedback, not just criticism.",exZh:"請給予有建設性的意見，而不只是批評。",ml:"🔨",sc:"💬"},
-      {en:"Agenda",pos:"n.",zh:"議程",ex:"Could you send me the meeting agenda in advance?",exZh:"可以提前把會議議程寄給我嗎？",ml:"📝",sc:"📊"}
-    ]},
-    {id:"w1_travel",icon:"🌍",name:"旅遊出行",en:"Travel & Transportation",words:[
-      {en:"Itinerary",pos:"n.",zh:"行程表",ex:"Our travel itinerary includes five cities in two weeks.",exZh:"我們的行程包括兩週內走訪五個城市。",ml:"🗺️",sc:"✈️"},
-      {en:"Accommodation",pos:"n.",zh:"住宿",ex:"We booked budget accommodation near the city center.",exZh:"我們在市中心附近訂了平價住宿。",ml:"🏨",sc:"🛏️"},
-      {en:"Layover",pos:"n.",zh:"中途停留",ex:"We have a three-hour layover in Tokyo.",exZh:"我們在東京有三小時的中途停留。",ml:"🛫",sc:"⏳"},
-      {en:"Scenic",pos:"adj.",zh:"風景優美的",ex:"The train ride offers a scenic view of the mountains.",exZh:"這段火車旅程提供了壯觀的山景。",ml:"🏔️",sc:"😍"},
-      {en:"Cruise",pos:"n.",zh:"郵輪旅行",ex:"They celebrated their anniversary on a Mediterranean cruise.",exZh:"他們在地中海郵輪上慶祝週年紀念日。",ml:"🚢",sc:"🌊"},
-      {en:"Vicinity",pos:"n.",zh:"附近地區",ex:"There are several great restaurants in the vicinity of our hotel.",exZh:"我們飯店附近有幾家很棒的餐廳。",ml:"📍",sc:"🗺️"},
-      {en:"Turbulence",pos:"n.",zh:"亂流",ex:"Please fasten your seatbelt due to turbulence.",exZh:"由於亂流，請繫好安全帶。",ml:"✈️",sc:"😬"},
-      {en:"Expedition",pos:"n.",zh:"探險；遠征",ex:"They went on an expedition to the Amazon rainforest.",exZh:"他們前往亞馬遜雨林進行探險。",ml:"🧭",sc:"🌿"},
-      {en:"Souvenir",pos:"n.",zh:"紀念品",ex:"She bought a handmade souvenir at the local market.",exZh:"她在當地市集買了一個手工紀念品。",ml:"🎁",sc:"🛍️"},
-      {en:"Backpacker",pos:"n.",zh:"背包客",ex:"As a backpacker, she preferred hostels over hotels.",exZh:"身為背包客，她喜歡住青年旅館而非飯店。",ml:"🎒",sc:"🗺️"}
-    ]},
-    {id:"w1_health",icon:"🏥",name:"健康醫療",en:"Health & Medicine",words:[
-      {en:"Diagnose",pos:"v.",zh:"診斷",ex:"The doctor diagnosed him with high blood pressure.",exZh:"醫生診斷他患有高血壓。",ml:"🩺",sc:"👨‍⚕️"},
-      {en:"Chronic",pos:"adj.",zh:"慢性的",ex:"Diabetes is a chronic disease that requires ongoing care.",exZh:"糖尿病是一種需要持續照護的慢性疾病。",ml:"📊",sc:"⏳"},
-      {en:"Symptom",pos:"n.",zh:"症狀",ex:"Fatigue and dizziness are common symptoms of anemia.",exZh:"疲勞和頭暈是貧血的常見症狀。",ml:"🌡️",sc:"😷"},
-      {en:"Prescription",pos:"n.",zh:"處方箋",ex:"You need a prescription to buy this medication.",exZh:"購買這種藥物需要處方箋。",ml:"💊",sc:"📝"},
-      {en:"Immune system",pos:"n.",zh:"免疫系統",ex:"Exercise helps strengthen your immune system.",exZh:"運動有助於增強你的免疫系統。",ml:"🛡️",sc:"💪"},
-      {en:"Metabolism",pos:"n.",zh:"新陳代謝",ex:"A faster metabolism helps you burn calories more quickly.",exZh:"較快的新陳代謝幫助你更快燃燒卡路里。",ml:"🔥",sc:"⚡"},
-      {en:"Recuperate",pos:"v.",zh:"恢復健康",ex:"It took him two months to fully recuperate after surgery.",exZh:"他術後花了兩個月才完全康復。",ml:"🌿",sc:"🏡"},
-      {en:"Consultation",pos:"n.",zh:"問診；諮詢",ex:"I scheduled a consultation with a nutritionist.",exZh:"我預約了與營養師的諮詢。",ml:"📋",sc:"🩺"},
-      {en:"Inflammation",pos:"n.",zh:"發炎",ex:"Inflammation in the joints causes pain and stiffness.",exZh:"關節發炎會引起疼痛和僵硬。",ml:"🔴",sc:"😣"},
-      {en:"Well-being",pos:"n.",zh:"身心健康",ex:"Mental well-being is just as important as physical health.",exZh:"心理健康與身體健康同樣重要。",ml:"🌸",sc:"😊"}
-    ]},
-    {id:"w1_finance",icon:"💰",name:"財務理財",en:"Finance & Money",words:[
-      {en:"Budget",pos:"n.",zh:"預算",ex:"We need to budget carefully for the renovation.",exZh:"我們需要謹慎地為裝修編列預算。",ml:"📊",sc:"💵"},
-      {en:"Mortgage",pos:"n.",zh:"房屋貸款",ex:"They took out a 30-year mortgage to buy their home.",exZh:"他們申請了30年期房貸來購屋。",ml:"🏠",sc:"🏦"},
-      {en:"Portfolio",pos:"n.",zh:"投資組合",ex:"Diversifying your portfolio reduces financial risk.",exZh:"多元化你的投資組合可降低財務風險。",ml:"📈",sc:"💼"},
-      {en:"Inflation",pos:"n.",zh:"通貨膨脹",ex:"High inflation reduces the purchasing power of money.",exZh:"高通膨會降低貨幣的購買力。",ml:"📉",sc:"😟"},
-      {en:"Dividend",pos:"n.",zh:"股息、股利",ex:"The company pays quarterly dividends to its shareholders.",exZh:"公司每季向股東支付股利。",ml:"💹",sc:"😊"},
-      {en:"Liability",pos:"n.",zh:"負債",ex:"Personal loans are considered liabilities on your balance sheet.",exZh:"個人貸款在資產負債表上被視為負債。",ml:"⚖️",sc:"📋"},
-      {en:"Compound interest",pos:"n.",zh:"複利",ex:"Compound interest makes savings grow exponentially over time.",exZh:"複利使儲蓄隨時間呈指數增長。",ml:"📈",sc:"⏳"},
-      {en:"Surplus",pos:"n.",zh:"盈餘",ex:"The government reported a budget surplus this year.",exZh:"政府今年公布了財政盈餘。",ml:"💚",sc:"✅"},
-      {en:"Frugal",pos:"adj.",zh:"節儉的",ex:"Living a frugal lifestyle allowed her to retire early.",exZh:"節儉的生活方式讓她提早退休。",ml:"🏦",sc:"😌"},
-      {en:"Asset",pos:"n.",zh:"資產",ex:"Real estate is considered a long-term asset.",exZh:"房地產被認為是一種長期資產。",ml:"🏡",sc:"📊"}
-    ]},
-    {id:"w1_social",icon:"🗣️",name:"社交對話",en:"Social Conversations",words:[
-      {en:"Empathize",pos:"v.",zh:"感同身受",ex:"A good leader empathizes with their team members.",exZh:"一個好的領導者能夠與團隊成員感同身受。",ml:"❤️",sc:"🤝"},
-      {en:"Tactful",pos:"adj.",zh:"圓融的",ex:"She was tactful in telling him the bad news.",exZh:"她很圓融地告訴了他這個壞消息。",ml:"🎭",sc:"😊"},
-      {en:"Reciprocate",pos:"v.",zh:"回報、互惠",ex:"If someone helps you, always try to reciprocate.",exZh:"如果有人幫助你，要盡力回報。",ml:"🔄",sc:"🤝"},
-      {en:"Assertive",pos:"adj.",zh:"自信果斷的",ex:"Being assertive means expressing your needs clearly.",exZh:"果斷意味著清晰地表達自己的需求。",ml:"💪",sc:"🗣️"},
-      {en:"Ambiguous",pos:"adj.",zh:"模糊的",ex:"His reply was ambiguous, so I was not sure what he meant.",exZh:"他的回覆很模糊，所以我不確定他的意思。",ml:"❓",sc:"🤔"},
-      {en:"Rapport",pos:"n.",zh:"融洽關係",ex:"Building rapport with clients is essential in sales.",exZh:"與客戶建立融洽關係在銷售中非常重要。",ml:"🌟",sc:"🤝"},
-      {en:"Persuasive",pos:"adj.",zh:"有說服力的",ex:"Her persuasive speech convinced everyone in the room.",exZh:"她有說服力的演講說服了房間裡的每個人。",ml:"🎤",sc:"👏"},
-      {en:"Anecdote",pos:"n.",zh:"趣聞、小故事",ex:"He shared a funny anecdote about his first day at work.",exZh:"他分享了一個關於第一天上班的有趣故事。",ml:"📖",sc:"😄"},
-      {en:"Etiquette",pos:"n.",zh:"禮節",ex:"Learning dining etiquette is important when doing business abroad.",exZh:"在海外做生意時，學習餐桌禮儀很重要。",ml:"🍽️",sc:"👔"},
-      {en:"Eloquent",pos:"adj.",zh:"口才好的",ex:"She gave an eloquent speech at the graduation ceremony.",exZh:"她在畢業典禮上發表了一篇精彩的演講。",ml:"🎓",sc:"🌟"}
-    ]},
-    {id:"w1_tech",icon:"💻",name:"科技數位",en:"Technology & Digital Life",words:[
-      {en:"Algorithm",pos:"n.",zh:"演算法",ex:"Social media platforms use algorithms to curate your feed.",exZh:"社群媒體平台使用演算法來安排你的動態消息。",ml:"🤖",sc:"📱"},
-      {en:"Encrypt",pos:"v.",zh:"加密",ex:"All messages on this app are fully encrypted.",exZh:"此應用程式上的所有訊息都經過完整加密。",ml:"🔐",sc:"🛡️"},
-      {en:"Bandwidth",pos:"n.",zh:"頻寬",ex:"Streaming 4K video requires a lot of bandwidth.",exZh:"串流4K影片需要大量頻寬。",ml:"📡",sc:"💻"},
-      {en:"Interface",pos:"n.",zh:"介面",ex:"The new interface is more intuitive than the previous version.",exZh:"新介面比舊版更直觀。",ml:"🖥️",sc:"👆"},
-      {en:"Automation",pos:"n.",zh:"自動化",ex:"Automation is replacing many repetitive jobs in manufacturing.",exZh:"自動化正在取代製造業中許多重複性工作。",ml:"⚙️",sc:"🏭"},
-      {en:"Cybersecurity",pos:"n.",zh:"網路安全",ex:"Cybersecurity is a top priority for any modern business.",exZh:"網路安全是任何現代企業的首要任務。",ml:"🛡️",sc:"💻"},
-      {en:"Obsolete",pos:"adj.",zh:"過時的",ex:"Fax machines are becoming obsolete in the digital age.",exZh:"在數位時代，傳真機正逐漸被淘汰。",ml:"📠",sc:"🗑️"},
-      {en:"Prototype",pos:"n.",zh:"原型",ex:"Engineers built a prototype before mass production.",exZh:"工程師在量產前建立了一個原型。",ml:"🔨",sc:"🧪"},
-      {en:"Vulnerable",pos:"adj.",zh:"易受攻擊的",ex:"Outdated software makes your computer vulnerable to attacks.",exZh:"過時的軟體使你的電腦容易受到攻擊。",ml:"⚠️",sc:"🔓"},
-      {en:"Subscription",pos:"n.",zh:"訂閱制",ex:"The app switched from one-time purchase to a subscription model.",exZh:"該應用程式從一次性購買改為訂閱制。",ml:"📲",sc:"💳"}
-    ]},
-    {id:"w1_env",icon:"🌿",name:"環境生態",en:"Environment & Nature",words:[
-      {en:"Sustainable",pos:"adj.",zh:"永續的",ex:"We must adopt sustainable practices to protect the planet.",exZh:"我們必須採用永續做法來保護地球。",ml:"♻️",sc:"🌍"},
-      {en:"Emission",pos:"n.",zh:"排放量",ex:"Carbon emissions from factories contribute to global warming.",exZh:"工廠排放的碳對全球暖化有所影響。",ml:"🏭",sc:"💨"},
-      {en:"Biodiversity",pos:"n.",zh:"生物多樣性",ex:"Deforestation threatens the biodiversity of tropical forests.",exZh:"砍伐森林威脅熱帶雨林的生物多樣性。",ml:"🦋",sc:"🌳"},
-      {en:"Renewable",pos:"adj.",zh:"可再生的",ex:"Solar and wind are popular sources of renewable energy.",exZh:"太陽能和風能是常見的可再生能源。",ml:"☀️",sc:"💚"},
-      {en:"Contaminate",pos:"v.",zh:"污染",ex:"Industrial waste contaminated the nearby river.",exZh:"工業廢料污染了附近的河流。",ml:"☣️",sc:"😟"},
-      {en:"Ecosystem",pos:"n.",zh:"生態系統",ex:"Coral reefs are among the most complex ecosystems on Earth.",exZh:"珊瑚礁是地球上最複雜的生態系統之一。",ml:"🪸",sc:"🐠"},
-      {en:"Drought",pos:"n.",zh:"旱災",ex:"The prolonged drought has severely affected crop production.",exZh:"長期乾旱嚴重影響了農作物的生產。",ml:"🌵",sc:"☀️"},
-      {en:"Conservation",pos:"n.",zh:"保育",ex:"Wildlife conservation efforts have helped many species recover.",exZh:"野生動物保育努力幫助許多物種恢復。",ml:"🐘",sc:"🌿"},
-      {en:"Carbon footprint",pos:"n.",zh:"碳足跡",ex:"Flying frequently increases your personal carbon footprint.",exZh:"頻繁搭飛機會增加你的個人碳足跡。",ml:"👣",sc:"✈️"},
-      {en:"Deforestation",pos:"n.",zh:"森林砍伐",ex:"Deforestation for agriculture destroys natural habitats.",exZh:"農業開墾造成的砍伐破壞了天然棲息地。",ml:"🌲",sc:"🪓"}
-    ]}
-  ],
-  // ══ 第2週 ══
-  [
-    {id:"w2_food",icon:"🍳",name:"飲食料理",en:"Food & Cooking",words:[
-      {en:"Sauté",pos:"v.",zh:"用少量油快炒",ex:"Sauté the garlic until it turns golden brown.",exZh:"將大蒜用少量油炒至金黃色。",ml:"🥄",sc:"🍳"},
-      {en:"Garnish",pos:"v./n.",zh:"裝飾；裝飾物",ex:"Garnish the dish with fresh herbs before serving.",exZh:"上菜前用新鮮香草裝飾這道菜。",ml:"🌿",sc:"🍽️"},
-      {en:"Marinate",pos:"v.",zh:"醃製",ex:"Marinate the chicken for at least two hours.",exZh:"將雞肉醃製至少兩個小時。",ml:"🫙",sc:"🍗"},
-      {en:"Portion",pos:"n.",zh:"份量",ex:"Each portion should contain about 300 calories.",exZh:"每份應包含約300卡路里。",ml:"⚖️",sc:"🍱"},
-      {en:"Ingredient",pos:"n.",zh:"食材、原料",ex:"Fresh ingredients make all the difference in cooking.",exZh:"新鮮食材讓烹飪結果天差地遠。",ml:"🥕",sc:"👨‍🍳"},
-      {en:"Ferment",pos:"v.",zh:"發酵",ex:"Kimchi is made by fermenting vegetables with spices.",exZh:"泡菜是將蔬菜與香料發酵製成的。",ml:"🫧",sc:"🥬"},
-      {en:"Texture",pos:"n.",zh:"口感、質地",ex:"The texture of this bread is light and fluffy.",exZh:"這款麵包的口感輕盈蓬鬆。",ml:"🍞",sc:"😋"},
-      {en:"Cuisine",pos:"n.",zh:"料理、菜系",ex:"French cuisine is known for its rich sauces and techniques.",exZh:"法式料理以其濃郁醬汁和技巧聞名。",ml:"🇫🇷",sc:"🍷"},
-      {en:"Savory",pos:"adj.",zh:"鹹香的、美味的",ex:"This savory soup warms you up on a cold day.",exZh:"這道鹹香的湯在寒冷的天氣裡讓你暖和起來。",ml:"🍲",sc:"🥰"},
-      {en:"Simmer",pos:"v.",zh:"小火燉煮",ex:"Let the soup simmer for 30 minutes.",exZh:"讓湯小火燉煮30分鐘。",ml:"🔥",sc:"⏱️"}
-    ]},
-    {id:"w2_emotion",icon:"💭",name:"情緒心理",en:"Emotions & Psychology",words:[
-      {en:"Resilience",pos:"n.",zh:"韌性、復原力",ex:"Resilience helps people recover from difficult experiences.",exZh:"韌性幫助人們從艱難經歷中恢復。",ml:"💪",sc:"🌱"},
-      {en:"Overwhelmed",pos:"adj.",zh:"不知所措的",ex:"She felt overwhelmed by the amount of work she had.",exZh:"她被大量的工作壓得喘不過氣。",ml:"😰",sc:"📚"},
-      {en:"Anxiety",pos:"n.",zh:"焦慮",ex:"Regular exercise can help reduce feelings of anxiety.",exZh:"規律運動可以幫助減輕焦慮感。",ml:"😟",sc:"🧘"},
-      {en:"Gratitude",pos:"n.",zh:"感恩、感謝",ex:"Expressing gratitude improves your mental health.",exZh:"表達感恩可以改善你的心理健康。",ml:"🙏",sc:"❤️"},
-      {en:"Cope",pos:"v.",zh:"應對、處理",ex:"How do you cope with stress at work?",exZh:"你如何應對工作中的壓力？",ml:"🛠️",sc:"🧠"},
-      {en:"Optimistic",pos:"adj.",zh:"樂觀的",ex:"Try to stay optimistic even in difficult situations.",exZh:"即使在困難的情況下也要保持樂觀。",ml:"☀️",sc:"😊"},
-      {en:"Resentment",pos:"n.",zh:"怨恨、憤恨",ex:"Holding onto resentment only hurts yourself.",exZh:"抱著怨恨只會傷害自己。",ml:"😤",sc:"⛓️"},
-      {en:"Empathy",pos:"n.",zh:"同理心",ex:"Empathy is the ability to understand others' feelings.",exZh:"同理心是理解他人感受的能力。",ml:"❤️",sc:"🤝"},
-      {en:"Motivation",pos:"n.",zh:"動力、積極性",ex:"Finding your motivation helps you achieve your goals.",exZh:"找到你的動力幫助你實現目標。",ml:"🎯",sc:"🚀"},
-      {en:"Perspective",pos:"n.",zh:"觀點、角度",ex:"Changing your perspective can change your attitude.",exZh:"改變你的觀點可以改變你的態度。",ml:"🔭",sc:"💡"}
-    ]},
-    {id:"w2_education",icon:"🎓",name:"學習教育",en:"Education & Learning",words:[
-      {en:"Curriculum",pos:"n.",zh:"課程綱要",ex:"The school updated its curriculum to include coding.",exZh:"學校更新了課程綱要，加入了程式設計。",ml:"📚",sc:"🏫"},
-      {en:"Comprehend",pos:"v.",zh:"理解、領會",ex:"It takes time to fully comprehend complex theories.",exZh:"完全理解複雜理論需要時間。",ml:"🧠",sc:"💡"},
-      {en:"Critical thinking",pos:"n.",zh:"批判性思考",ex:"Critical thinking is essential in academic writing.",exZh:"批判性思考在學術寫作中不可或缺。",ml:"🤔",sc:"📝"},
-      {en:"Proficient",pos:"adj.",zh:"熟練的",ex:"She is proficient in three languages.",exZh:"她精通三種語言。",ml:"⭐",sc:"🌍"},
-      {en:"Thesis",pos:"n.",zh:"論文；論點",ex:"He submitted his thesis three months before the deadline.",exZh:"他在截止日期前三個月提交了論文。",ml:"📄",sc:"🎓"},
-      {en:"Elaborate",pos:"v.",zh:"詳細說明",ex:"Could you elaborate on your main argument?",exZh:"你能詳細說明你的主要論點嗎？",ml:"🔍",sc:"📖"},
-      {en:"Evaluate",pos:"v.",zh:"評估、評價",ex:"Teachers evaluate students based on multiple criteria.",exZh:"老師根據多項標準評估學生。",ml:"📊",sc:"✏️"},
-      {en:"Discipline",pos:"n.",zh:"自律；學科",ex:"Academic discipline is needed to complete a long project.",exZh:"完成長期專案需要學術自律。",ml:"⏰",sc:"📐"},
-      {en:"Seminar",pos:"n.",zh:"研討會",ex:"I attended a seminar on digital marketing last week.",exZh:"我上週參加了一場數位行銷研討會。",ml:"🗣️",sc:"👥"},
-      {en:"Stimulate",pos:"v.",zh:"刺激、激發",ex:"Reading widely stimulates your imagination.",exZh:"廣泛閱讀能激發你的想像力。",ml:"✨",sc:"🧠"}
-    ]},
-    {id:"w2_law",icon:"⚖️",name:"法律常識",en:"Law & Rights",words:[
-      {en:"Contract",pos:"n.",zh:"合約",ex:"Make sure you read the contract before signing.",exZh:"簽名前請確保你已閱讀合約。",ml:"📜",sc:"✍️"},
-      {en:"Liability",pos:"n.",zh:"法律責任",ex:"The company accepted liability for the accident.",exZh:"公司承擔了該事故的法律責任。",ml:"⚖️",sc:"🏛️"},
-      {en:"Regulate",pos:"v.",zh:"規範、管制",ex:"The government regulates food safety standards.",exZh:"政府管制食品安全標準。",ml:"📋",sc:"🏛️"},
-      {en:"Lawsuit",pos:"n.",zh:"訴訟",ex:"She filed a lawsuit against the company for discrimination.",exZh:"她對該公司提起歧視訴訟。",ml:"⚖️",sc:"👨‍⚖️"},
-      {en:"Intellectual property",pos:"n.",zh:"智慧財產權",ex:"Intellectual property laws protect your creative work.",exZh:"智慧財產權法保護你的創意作品。",ml:"💡",sc:"🛡️"},
-      {en:"Comply",pos:"v.",zh:"遵守、服從",ex:"All employees must comply with company policies.",exZh:"所有員工必須遵守公司政策。",ml:"✅",sc:"📋"},
-      {en:"Jurisdiction",pos:"n.",zh:"司法管轄權",ex:"This case falls under federal jurisdiction.",exZh:"此案屬於聯邦司法管轄範圍。",ml:"🗺️",sc:"🏛️"},
-      {en:"Testimony",pos:"n.",zh:"證詞",ex:"The witness gave testimony in court.",exZh:"目擊者在法庭上提供了證詞。",ml:"🎤",sc:"👨‍⚖️"},
-      {en:"Mediation",pos:"n.",zh:"調解",ex:"The two parties settled through mediation.",exZh:"雙方通過調解達成和解。",ml:"🤝",sc:"⚖️"},
-      {en:"Penalty",pos:"n.",zh:"罰款；懲罰",ex:"There is a heavy penalty for tax evasion.",exZh:"逃稅將面臨嚴重的罰款。",ml:"💸",sc:"⚠️"}
-    ]},
-    {id:"w2_art",icon:"🎨",name:"藝術文化",en:"Art & Culture",words:[
-      {en:"Abstract",pos:"adj.",zh:"抽象的",ex:"Abstract art expresses emotions rather than reality.",exZh:"抽象藝術表達情感而非現實。",ml:"🎨",sc:"🖼️"},
-      {en:"Exhibition",pos:"n.",zh:"展覽",ex:"The photography exhibition runs until the end of the month.",exZh:"攝影展覽持續到本月底。",ml:"🖼️",sc:"🏛️"},
-      {en:"Aesthetic",pos:"adj./n.",zh:"美學的；美感",ex:"The aesthetic of this film is breathtaking.",exZh:"這部電影的美學令人嘆為觀止。",ml:"✨",sc:"🎬"},
-      {en:"Portray",pos:"v.",zh:"描繪、刻畫",ex:"The novel portrays life in rural Taiwan.",exZh:"這本小說描繪了台灣農村的生活。",ml:"📖",sc:"🖊️"},
-      {en:"Influence",pos:"v./n.",zh:"影響",ex:"Music greatly influences our mood and productivity.",exZh:"音樂極大地影響我們的情緒和生產力。",ml:"🎵",sc:"💫"},
-      {en:"Critique",pos:"n./v.",zh:"批評；評論",ex:"The art critic wrote a detailed critique of the painting.",exZh:"藝術評論家寫了一篇關於這幅畫的詳細評論。",ml:"✍️",sc:"🎭"},
-      {en:"Immersive",pos:"adj.",zh:"沉浸式的",ex:"The immersive theater experience left the audience speechless.",exZh:"沉浸式劇場體驗讓觀眾啞口無言。",ml:"🌀",sc:"🎭"},
-      {en:"Heritage",pos:"n.",zh:"文化遺產",ex:"We must preserve our cultural heritage for future generations.",exZh:"我們必須為後代保護文化遺產。",ml:"🏛️",sc:"🌍"},
-      {en:"Interpret",pos:"v.",zh:"詮釋、解讀",ex:"Each viewer interprets art differently.",exZh:"每位觀賞者對藝術的詮釋都不同。",ml:"🔍",sc:"🤔"},
-      {en:"Masterpiece",pos:"n.",zh:"傑作",ex:"The Mona Lisa is considered a masterpiece of Renaissance art.",exZh:"蒙娜麗莎被認為是文藝復興藝術的傑作。",ml:"🖼️",sc:"😍"}
-    ]},
-    {id:"w2_sport",icon:"🏃",name:"運動健身",en:"Sports & Fitness",words:[
-      {en:"Endurance",pos:"n.",zh:"耐力",ex:"Marathon runners need exceptional endurance.",exZh:"馬拉松選手需要出色的耐力。",ml:"🏃",sc:"💪"},
-      {en:"Agility",pos:"n.",zh:"敏捷性",ex:"Soccer players need agility to change direction quickly.",exZh:"足球員需要敏捷性才能迅速改變方向。",ml:"⚡",sc:"⚽"},
-      {en:"Stamina",pos:"n.",zh:"體力、持久力",ex:"Swimming is a great way to build stamina.",exZh:"游泳是增強體力的好方法。",ml:"🏊",sc:"💪"},
-      {en:"Persevere",pos:"v.",zh:"堅持不懈",ex:"You must persevere through the hardest parts of training.",exZh:"你必須在最艱難的訓練階段堅持下去。",ml:"🎯",sc:"🔥"},
-      {en:"Qualify",pos:"v.",zh:"取得資格",ex:"She qualified for the national championship.",exZh:"她獲得了全國錦標賽的資格。",ml:"🏆",sc:"🥇"},
-      {en:"Intensive",pos:"adj.",zh:"密集的",ex:"The team went through an intensive training camp.",exZh:"球隊進行了密集的訓練營。",ml:"🏋️",sc:"😤"},
-      {en:"Nutrition",pos:"n.",zh:"營養",ex:"Proper nutrition is just as important as exercise.",exZh:"適當的營養與運動同樣重要。",ml:"🥗",sc:"💊"},
-      {en:"Rival",pos:"n.",zh:"對手、競爭者",ex:"The two rivals met again in the final.",exZh:"兩位對手再次在決賽中相遇。",ml:"🤼",sc:"🏆"},
-      {en:"Momentum",pos:"n.",zh:"動力、氣勢",ex:"The team gained momentum after scoring the first goal.",exZh:"球隊在首次進球後獲得了氣勢。",ml:"🌊",sc:"⚡"},
-      {en:"Discipline",pos:"n.",zh:"紀律、自律",ex:"Athletic success requires years of discipline.",exZh:"運動上的成功需要多年的自律。",ml:"⏰",sc:"🏅"}
-    ]},
-    {id:"w2_media",icon:"📱",name:"媒體傳播",en:"Media & Communication",words:[
-      {en:"Broadcast",pos:"v./n.",zh:"播送；廣播",ex:"The event will be broadcast live on television.",exZh:"該活動將在電視上現場直播。",ml:"📺",sc:"📡"},
-      {en:"Clickbait",pos:"n.",zh:"標題黨；釣魚內容",ex:"Clickbait headlines are designed to trick you into clicking.",exZh:"標題黨設計來誘騙你點擊。",ml:"🎣",sc:"📰"},
-      {en:"Viral",pos:"adj.",zh:"病毒式傳播的",ex:"The video went viral and got ten million views.",exZh:"這個影片病毒式傳播，獲得了一千萬次觀看。",ml:"🔥",sc:"📲"},
-      {en:"Credibility",pos:"n.",zh:"可信度",ex:"A journalist must protect their credibility at all times.",exZh:"記者必須時時維護自己的可信度。",ml:"🎖️",sc:"📰"},
-      {en:"Narrative",pos:"n.",zh:"敘事、說法",ex:"The media shapes the public narrative on many issues.",exZh:"媒體塑造了許多議題的公共敘事。",ml:"📖",sc:"🗣️"},
-      {en:"Bias",pos:"n.",zh:"偏見、偏頗",ex:"News sources can sometimes show political bias.",exZh:"新聞來源有時可能表現出政治偏頗。",ml:"⚖️",sc:"🗞️"},
-      {en:"Circulation",pos:"n.",zh:"發行量；流通",ex:"The magazine has a circulation of one million copies.",exZh:"這本雜誌的發行量為一百萬份。",ml:"📰",sc:"📊"},
-      {en:"Engage",pos:"v.",zh:"吸引、接觸",ex:"Good content engages the audience from the start.",exZh:"好的內容從一開始就能吸引觀眾。",ml:"✨",sc:"👥"},
-      {en:"Propaganda",pos:"n.",zh:"宣傳",ex:"It is important to distinguish news from propaganda.",exZh:"區分新聞和宣傳非常重要。",ml:"📢",sc:"⚠️"},
-      {en:"Platform",pos:"n.",zh:"平台",ex:"Social media platforms have billions of active users.",exZh:"社群媒體平台擁有數十億活躍用戶。",ml:"📱",sc:"🌐"}
-    ]}
-  ],
-  // ══ 第3週 ══
-  [
-    {id:"w3_business",icon:"🏢",name:"商業談判",en:"Business & Negotiation",words:[
-      {en:"Negotiate",pos:"v.",zh:"協商、談判",ex:"Both sides negotiated for three days before reaching a deal.",exZh:"雙方協商了三天才達成協議。",ml:"🤝",sc:"💼"},
-      {en:"Proposal",pos:"n.",zh:"提案、建議書",ex:"Please submit your proposal by Friday.",exZh:"請在星期五之前提交你的提案。",ml:"📋",sc:"✍️"},
-      {en:"Revenue",pos:"n.",zh:"收益、營業額",ex:"The company's revenue increased by 20% this year.",exZh:"公司今年的營業額增加了20%。",ml:"💰",sc:"📈"},
-      {en:"Stakeholder",pos:"n.",zh:"利害關係人",ex:"We need to consult all stakeholders before making a decision.",exZh:"我們需要在做決定前諮詢所有利害關係人。",ml:"👥",sc:"🏢"},
-      {en:"Leverage",pos:"n./v.",zh:"槓桿；利用",ex:"Use your skills as leverage in salary negotiations.",exZh:"在薪資談判中，利用你的技能作為籌碼。",ml:"⚖️",sc:"💡"},
-      {en:"Merger",pos:"n.",zh:"合併",ex:"The merger between the two companies created the industry leader.",exZh:"兩家公司的合併創造了行業領導者。",ml:"🔗",sc:"🏢"},
-      {en:"Concession",pos:"n.",zh:"讓步",ex:"Both sides made concessions to reach an agreement.",exZh:"雙方都做出了讓步以達成協議。",ml:"🤝",sc:"⚖️"},
-      {en:"Benchmark",pos:"n.",zh:"基準、標竿",ex:"Set a benchmark for success before starting the project.",exZh:"在開始專案前設定成功的基準。",ml:"📏",sc:"🎯"},
-      {en:"Overhead",pos:"n.",zh:"間接費用、營運成本",ex:"We need to reduce our overhead to improve profit margins.",exZh:"我們需要降低間接費用以提高利潤率。",ml:"💸",sc:"📉"},
-      {en:"Turnaround",pos:"n.",zh:"轉機；週轉時間",ex:"The company made an impressive turnaround in just one year.",exZh:"公司在短短一年內實現了令人印象深刻的轉機。",ml:"🔄",sc:"📈"}
-    ]},
-    {id:"w3_science",icon:"🔬",name:"科學探索",en:"Science & Discovery",words:[
-      {en:"Hypothesis",pos:"n.",zh:"假設",ex:"The scientist formed a hypothesis before conducting the experiment.",exZh:"科學家在進行實驗前形成了假設。",ml:"💭",sc:"🔬"},
-      {en:"Variable",pos:"n.",zh:"變數",ex:"Control all variables to ensure accurate results.",exZh:"控制所有變數以確保準確的結果。",ml:"📊",sc:"🧪"},
-      {en:"Phenomenon",pos:"n.",zh:"現象",ex:"Scientists are studying the phenomenon of climate change.",exZh:"科學家正在研究氣候變遷這一現象。",ml:"🌍",sc:"🔭"},
-      {en:"Innovative",pos:"adj.",zh:"創新的",ex:"The innovative design won an international award.",exZh:"這個創新設計贏得了國際獎項。",ml:"💡",sc:"🏆"},
-      {en:"Theory",pos:"n.",zh:"理論",ex:"Darwin's theory of evolution changed how we see life.",exZh:"達爾文的進化論改變了我們對生命的看法。",ml:"📚",sc:"🧬"},
-      {en:"Analyze",pos:"v.",zh:"分析",ex:"Analyze the data carefully before drawing conclusions.",exZh:"在得出結論之前仔細分析數據。",ml:"🔍",sc:"📊"},
-      {en:"Breakthrough",pos:"n.",zh:"突破",ex:"The discovery of penicillin was a major medical breakthrough.",exZh:"青黴素的發現是重大的醫學突破。",ml:"🎉",sc:"💊"},
-      {en:"Replicate",pos:"v.",zh:"複製、重複",ex:"Other scientists tried to replicate the experiment.",exZh:"其他科學家試圖重複這個實驗。",ml:"🔄",sc:"🔬"},
-      {en:"Microscopic",pos:"adj.",zh:"微觀的、極小的",ex:"Bacteria are microscopic organisms invisible to the naked eye.",exZh:"細菌是肉眼看不見的微觀生物。",ml:"🔬",sc:"👁️"},
-      {en:"Sustainable",pos:"adj.",zh:"可持續的",ex:"Sustainable agriculture produces food without harming the environment.",exZh:"可持續農業在不損害環境的情況下生產食物。",ml:"🌱",sc:"🌍"}
-    ]},
-    {id:"w3_city",icon:"🏙️",name:"城市生活",en:"City & Urban Life",words:[
-      {en:"Commute",pos:"v./n.",zh:"通勤",ex:"She commutes two hours every day by train.",exZh:"她每天搭火車通勤兩個小時。",ml:"🚆",sc:"⏰"},
-      {en:"Infrastructure",pos:"n.",zh:"基礎建設",ex:"The city invested heavily in its transportation infrastructure.",exZh:"這座城市大力投資了其交通基礎建設。",ml:"🏗️",sc:"🌆"},
-      {en:"Pedestrian",pos:"n.",zh:"行人",ex:"This area is designated for pedestrians only.",exZh:"這個區域僅供行人使用。",ml:"🚶",sc:"🛤️"},
-      {en:"Congestion",pos:"n.",zh:"擁塞、堵車",ex:"Traffic congestion is a major problem in the city center.",exZh:"交通擁塞是市中心的主要問題。",ml:"🚗",sc:"😤"},
-      {en:"Renovate",pos:"v.",zh:"翻新、改建",ex:"They plan to renovate the old building into apartments.",exZh:"他們計劃將舊建築翻新成公寓。",ml:"🔨",sc:"🏠"},
-      {en:"District",pos:"n.",zh:"地區、行政區",ex:"The arts district is full of galleries and theaters.",exZh:"藝術區裡充滿了畫廊和劇院。",ml:"🗺️",sc:"🏛️"},
-      {en:"Resident",pos:"n.",zh:"居民",ex:"Local residents protested against the new development.",exZh:"當地居民抗議新的開發計劃。",ml:"🏘️",sc:"✊"},
-      {en:"Public transit",pos:"n.",zh:"大眾運輸",ex:"Using public transit reduces your carbon footprint.",exZh:"使用大眾運輸可以減少你的碳足跡。",ml:"🚌",sc:"♻️"},
-      {en:"Affordable",pos:"adj.",zh:"負擔得起的",ex:"Finding affordable housing in the city is challenging.",exZh:"在城市裡找到負擔得起的住房很有挑戰性。",ml:"🏠",sc:"💰"},
-      {en:"Vibrant",pos:"adj.",zh:"充滿活力的",ex:"The night market creates a vibrant atmosphere.",exZh:"夜市創造了充滿活力的氛圍。",ml:"✨",sc:"🌆"}
-    ]},
-    {id:"w3_relationship",icon:"❤️",name:"人際關係",en:"Relationships & Family",words:[
-      {en:"Commitment",pos:"n.",zh:"承諾、投入",ex:"A strong relationship requires commitment from both sides.",exZh:"穩固的關係需要雙方的承諾。",ml:"💍",sc:"❤️"},
-      {en:"Compromise",pos:"v./n.",zh:"妥協",ex:"Successful couples know how to compromise.",exZh:"成功的夫妻知道如何妥協。",ml:"⚖️",sc:"🤝"},
-      {en:"Nurture",pos:"v.",zh:"培育、養育",ex:"Parents nurture their children's talents and interests.",exZh:"父母培養孩子的才能和興趣。",ml:"🌱",sc:"👨‍👩‍👧"},
-      {en:"Boundary",pos:"n.",zh:"界線、界限",ex:"Setting clear boundaries is important in any relationship.",exZh:"在任何關係中設定清晰的界限都很重要。",ml:"🚧",sc:"💬"},
-      {en:"Trust",pos:"n.",zh:"信任",ex:"Trust is the foundation of every healthy relationship.",exZh:"信任是每段健康關係的基礎。",ml:"🔑",sc:"🤝"},
-      {en:"Conflict",pos:"n.",zh:"衝突",ex:"Resolving conflict calmly strengthens relationships.",exZh:"冷靜地解決衝突可以加強關係。",ml:"⚡",sc:"💬"},
-      {en:"Affection",pos:"n.",zh:"情感、愛意",ex:"She showed affection by cooking a special dinner.",exZh:"她通過烹製特別的晚餐來表達愛意。",ml:"🥰",sc:"❤️"},
-      {en:"Sibling",pos:"n.",zh:"兄弟姐妹",ex:"She has a close bond with her younger sibling.",exZh:"她與弟弟妹妹關係親密。",ml:"👫",sc:"💕"},
-      {en:"Reconcile",pos:"v.",zh:"和解",ex:"They reconciled after a long period of silence.",exZh:"他們在長時間的沉默後和解了。",ml:"🤝",sc:"🕊️"},
-      {en:"Cherish",pos:"v.",zh:"珍惜",ex:"Cherish the moments you spend with the people you love.",exZh:"珍惜你與所愛之人共度的時光。",ml:"💎",sc:"❤️"}
-    ]},
-    {id:"w3_global",icon:"🌐",name:"國際時事",en:"Global Affairs",words:[
-      {en:"Diplomat",pos:"n.",zh:"外交官",ex:"The diplomat represented her country in the UN meeting.",exZh:"外交官代表她的國家出席聯合國會議。",ml:"🎖️",sc:"🌍"},
-      {en:"Sanction",pos:"n.",zh:"制裁",ex:"Economic sanctions were imposed on the country.",exZh:"對該國實施了經濟制裁。",ml:"⚖️",sc:"🏛️"},
-      {en:"Alliance",pos:"n.",zh:"聯盟",ex:"The two countries formed a military alliance.",exZh:"兩國建立了軍事聯盟。",ml:"🤝",sc:"🌍"},
-      {en:"Sovereignty",pos:"n.",zh:"主權",ex:"Every nation has the right to its own sovereignty.",exZh:"每個國家都有其主權的權利。",ml:"🏴",sc:"🗺️"},
-      {en:"Refugee",pos:"n.",zh:"難民",ex:"Millions of refugees fled the war-torn region.",exZh:"數百萬難民逃離了戰亂地區。",ml:"🏕️",sc:"✊"},
-      {en:"Treaty",pos:"n.",zh:"條約",ex:"The two nations signed a peace treaty.",exZh:"兩國簽署了和平條約。",ml:"📜",sc:"🕊️"},
-      {en:"Embargo",pos:"n.",zh:"禁運、貿易禁令",ex:"An oil embargo was placed on the country.",exZh:"對該國實施了石油禁運。",ml:"🚫",sc:"⛽"},
-      {en:"Multilateral",pos:"adj.",zh:"多邊的",ex:"This issue requires a multilateral approach.",exZh:"這個問題需要多邊方法來處理。",ml:"🌐",sc:"🤝"},
-      {en:"Transparency",pos:"n.",zh:"透明度",ex:"Governments should practice transparency with citizens.",exZh:"政府應對公民保持透明度。",ml:"🔍",sc:"🏛️"},
-      {en:"Humanitarian",pos:"adj.",zh:"人道主義的",ex:"The UN sent humanitarian aid to the disaster zone.",exZh:"聯合國向災區提供了人道主義援助。",ml:"❤️",sc:"🌍"}
-    ]},
-    {id:"w3_career",icon:"🎯",name:"職涯規劃",en:"Career Development",words:[
-      {en:"Competence",pos:"n.",zh:"能力、勝任度",ex:"Technical competence alone is not enough for leadership roles.",exZh:"僅靠技術能力不足以勝任領導職位。",ml:"💼",sc:"⭐"},
-      {en:"Mentor",pos:"n.",zh:"導師、顧問",ex:"Having a mentor can accelerate your career growth.",exZh:"擁有一位導師可以加速你的職業成長。",ml:"👨‍🏫",sc:"🌱"},
-      {en:"Networking",pos:"n.",zh:"人脈建立",ex:"Networking events help you meet potential employers.",exZh:"人脈活動幫助你認識潛在的雇主。",ml:"🤝",sc:"💼"},
-      {en:"Promotion",pos:"n.",zh:"晉升",ex:"She earned a promotion after exceeding her targets.",exZh:"她在超越目標後獲得了晉升。",ml:"🎉",sc:"⬆️"},
-      {en:"Transition",pos:"n.",zh:"轉換、過渡",ex:"He made a smooth transition from engineering to management.",exZh:"他從工程順利過渡到管理。",ml:"🔄",sc:"🛤️"},
-      {en:"Portfolio",pos:"n.",zh:"作品集",ex:"A strong portfolio helps you stand out to employers.",exZh:"一份優秀的作品集幫助你在雇主中脫穎而出。",ml:"📁",sc:"✨"},
-      {en:"Internship",pos:"n.",zh:"實習",ex:"She completed an internship at a top tech company.",exZh:"她在一家頂尖科技公司完成了實習。",ml:"🏢",sc:"📚"},
-      {en:"Burnout",pos:"n.",zh:"過勞、職業倦怠",ex:"Working without rest leads to burnout.",exZh:"不休息地工作會導致職業倦怠。",ml:"🔥",sc:"😮‍💨"},
-      {en:"Upskill",pos:"v.",zh:"提升技能",ex:"It is important to upskill regularly in a fast-changing market.",exZh:"在快速變化的市場中，定期提升技能很重要。",ml:"📈",sc:"🎓"},
-      {en:"Outcome",pos:"n.",zh:"結果、成果",ex:"Focus on the outcome, not just the process.",exZh:"專注於結果，而不只是過程。",ml:"🎯",sc:"✅"}
-    ]},
-    {id:"w3_home",icon:"🏠",name:"居家生活",en:"Home & Daily Life",words:[
-      {en:"Declutter",pos:"v.",zh:"整理、清除雜物",ex:"Decluttering your home can reduce stress.",exZh:"整理家中雜物可以減少壓力。",ml:"🗑️",sc:"😌"},
-      {en:"Lease",pos:"n.",zh:"租約",ex:"She signed a one-year lease for the apartment.",exZh:"她簽了一年的公寓租約。",ml:"📝",sc:"🏠"},
-      {en:"Utility",pos:"n.",zh:"公用事業；水電費",ex:"The monthly utilities include electricity and water.",exZh:"每月的公用費用包括電費和水費。",ml:"💡",sc:"🏠"},
-      {en:"Appliance",pos:"n.",zh:"家電",ex:"The new appliance came with a two-year warranty.",exZh:"這款新家電附有兩年保固。",ml:"🖥️",sc:"🔧"},
-      {en:"Maintenance",pos:"n.",zh:"維護、保養",ex:"Regular maintenance keeps your home in good condition.",exZh:"定期維護使你的家保持良好狀態。",ml:"🔧",sc:"🏠"},
-      {en:"Renovation",pos:"n.",zh:"裝修、翻新",ex:"The kitchen renovation took three months to complete.",exZh:"廚房裝修花了三個月才完成。",ml:"🔨",sc:"🏗️"},
-      {en:"Mortgage",pos:"n.",zh:"房貸",ex:"They paid off their mortgage in 20 years.",exZh:"他們在20年內還清了房貸。",ml:"🏦",sc:"🏠"},
-      {en:"Spacious",pos:"adj.",zh:"寬敞的",ex:"The living room is spacious and full of natural light.",exZh:"客廳寬敞且充滿自然光。",ml:"🌅",sc:"🏠"},
-      {en:"Adjacent",pos:"adj.",zh:"相鄰的",ex:"Our apartment is adjacent to a beautiful park.",exZh:"我們的公寓與一座美麗的公園相鄰。",ml:"📍",sc:"🌳"},
-      {en:"Deposit",pos:"n.",zh:"押金、定金",ex:"The landlord required two months' rent as a deposit.",exZh:"房東要求兩個月的租金作為押金。",ml:"💵",sc:"🏠"}
-    ]}
-  ],
-  // ══ 第4週 ══
-  [
-    {id:"w4_leadership",icon:"👑",name:"領導力",en:"Leadership & Management",words:[
-      {en:"Visionary",pos:"adj.",zh:"有遠見的",ex:"A visionary leader sees opportunities others miss.",exZh:"有遠見的領導者能看到他人錯過的機會。",ml:"🔭",sc:"💡"},
-      {en:"Empower",pos:"v.",zh:"賦權、授能",ex:"Great leaders empower their teams to make decisions.",exZh:"偉大的領導者賦予團隊做決定的權力。",ml:"💪",sc:"🌟"},
-      {en:"Integrity",pos:"n.",zh:"誠信、正直",ex:"Integrity is the most important quality of a good leader.",exZh:"誠信是優秀領導者最重要的品質。",ml:"⚖️",sc:"🏆"},
-      {en:"Transparent",pos:"adj.",zh:"透明的",ex:"Being transparent with your team builds trust.",exZh:"對團隊保持透明可以建立信任。",ml:"🔍",sc:"🤝"},
-      {en:"Micromanage",pos:"v.",zh:"過度干涉、微管理",ex:"Avoid micromanaging your employees to boost morale.",exZh:"避免對員工過度干涉以提振士氣。",ml:"🔎",sc:"😤"},
-      {en:"Resilient",pos:"adj.",zh:"有韌性的",ex:"Resilient leaders recover quickly from setbacks.",exZh:"有韌性的領導者能迅速從挫折中恢復。",ml:"💪",sc:"🌱"},
-      {en:"Inclusive",pos:"adj.",zh:"包容的",ex:"An inclusive workplace values everyone's contribution.",exZh:"包容的工作場所重視每個人的貢獻。",ml:"🌈",sc:"👥"},
-      {en:"Strategic",pos:"adj.",zh:"戰略性的",ex:"Strategic thinking is essential for long-term success.",exZh:"戰略性思維對長期成功至關重要。",ml:"♟️",sc:"🎯"},
-      {en:"Inspire",pos:"v.",zh:"激勵、啟發",ex:"A great speech can inspire thousands of people.",exZh:"一篇精彩的演講可以激勵數千人。",ml:"✨",sc:"🎤"},
-      {en:"Adaptable",pos:"adj.",zh:"適應力強的",ex:"Adaptable leaders thrive in times of change.",exZh:"適應力強的領導者在變革時期茁壯成長。",ml:"🔄",sc:"🌊"}
-    ]},
-    {id:"w4_future",icon:"🚀",name:"未來科技",en:"Future Technology",words:[
-      {en:"Artificial intelligence",pos:"n.",zh:"人工智慧",ex:"Artificial intelligence is transforming many industries.",exZh:"人工智慧正在改變許多行業。",ml:"🤖",sc:"💻"},
-      {en:"Virtual reality",pos:"n.",zh:"虛擬實境",ex:"Virtual reality is used for training in medical education.",exZh:"虛擬實境被用於醫學教育訓練。",ml:"🥽",sc:"🧠"},
-      {en:"Blockchain",pos:"n.",zh:"區塊鏈",ex:"Blockchain technology ensures secure digital transactions.",exZh:"區塊鏈技術確保安全的數位交易。",ml:"🔗",sc:"🛡️"},
-      {en:"Autonomous",pos:"adj.",zh:"自主的",ex:"Autonomous vehicles could reduce traffic accidents.",exZh:"自動駕駛汽車可能減少交通事故。",ml:"🚗",sc:"🛤️"},
-      {en:"Disruptive",pos:"adj.",zh:"顛覆性的",ex:"Smartphones were a disruptive technology when introduced.",exZh:"智慧型手機問世時是一種顛覆性技術。",ml:"💥",sc:"📱"},
-      {en:"Augmented reality",pos:"n.",zh:"擴增實境",ex:"Augmented reality overlays digital info onto the real world.",exZh:"擴增實境將數位資訊疊加到真實世界上。",ml:"👓",sc:"🌐"},
-      {en:"Quantum computing",pos:"n.",zh:"量子運算",ex:"Quantum computing could solve problems beyond current computers.",exZh:"量子運算可以解決超出現有電腦能力的問題。",ml:"⚛️",sc:"💡"},
-      {en:"Biometric",pos:"adj.",zh:"生物辨識的",ex:"Biometric data includes fingerprints and facial recognition.",exZh:"生物辨識數據包括指紋和臉部識別。",ml:"👆",sc:"🔐"},
-      {en:"Scalable",pos:"adj.",zh:"可擴展的",ex:"We need a scalable solution that grows with the business.",exZh:"我們需要一個能隨業務成長的可擴展解決方案。",ml:"📈",sc:"🏗️"},
-      {en:"Innovation",pos:"n.",zh:"創新",ex:"Continuous innovation is the key to staying competitive.",exZh:"持續創新是保持競爭力的關鍵。",ml:"💡",sc:"🌟"}
-    ]},
-    {id:"w4_wellness",icon:"🧘",name:"身心健康",en:"Wellness & Mindfulness",words:[
-      {en:"Meditate",pos:"v.",zh:"冥想、打坐",ex:"She meditates for 20 minutes every morning.",exZh:"她每天早上冥想20分鐘。",ml:"🧘",sc:"☀️"},
-      {en:"Mindful",pos:"adj.",zh:"正念的、專注當下的",ex:"Being mindful means paying attention to the present moment.",exZh:"正念意味著專注於當下時刻。",ml:"🌸",sc:"💭"},
-      {en:"Detox",pos:"v./n.",zh:"排毒；數位排毒",ex:"A digital detox helps you reconnect with real life.",exZh:"數位排毒幫助你重新與現實生活連結。",ml:"📵",sc:"🌿"},
-      {en:"Balance",pos:"n.",zh:"平衡",ex:"Work-life balance is essential for long-term well-being.",exZh:"工作與生活的平衡對長期健康至關重要。",ml:"⚖️",sc:"🌈"},
-      {en:"Recharge",pos:"v.",zh:"充電、恢復精力",ex:"Take a vacation to recharge your energy.",exZh:"去度個假，為你的能量充電。",ml:"🔋",sc:"🌴"},
-      {en:"Holistic",pos:"adj.",zh:"全面的、整體的",ex:"A holistic approach to health includes mind and body.",exZh:"全面的健康方法包括身心兩方面。",ml:"🌿",sc:"💚"},
-      {en:"Chronic stress",pos:"n.",zh:"慢性壓力",ex:"Chronic stress can lead to serious health problems.",exZh:"慢性壓力可能導致嚴重的健康問題。",ml:"😰",sc:"🧠"},
-      {en:"Self-care",pos:"n.",zh:"自我照顧",ex:"Self-care includes getting enough sleep and eating well.",exZh:"自我照顧包括充足的睡眠和良好的飲食。",ml:"🛁",sc:"❤️"},
-      {en:"Gratitude journal",pos:"n.",zh:"感恩日記",ex:"Writing in a gratitude journal improves your mood.",exZh:"寫感恩日記可以改善你的心情。",ml:"📔",sc:"✨"},
-      {en:"Boundaries",pos:"n.",zh:"界限",ex:"Setting boundaries protects your mental energy.",exZh:"設定界限保護你的心理能量。",ml:"🚧",sc:"💪"}
-    ]},
-    {id:"w4_economy",icon:"📊",name:"經濟貿易",en:"Economics & Trade",words:[
-      {en:"Tariff",pos:"n.",zh:"關稅",ex:"The government imposed tariffs on imported goods.",exZh:"政府對進口商品徵收關稅。",ml:"🚢",sc:"💰"},
-      {en:"Supply chain",pos:"n.",zh:"供應鏈",ex:"The pandemic disrupted global supply chains.",exZh:"疫情打亂了全球供應鏈。",ml:"🔗",sc:"🌍"},
-      {en:"Deficit",pos:"n.",zh:"赤字、逆差",ex:"The country has been running a trade deficit for years.",exZh:"該國多年來一直存在貿易逆差。",ml:"📉",sc:"😟"},
-      {en:"Export",pos:"v./n.",zh:"出口",ex:"Taiwan exports a large number of semiconductors.",exZh:"台灣出口大量半導體。",ml:"✈️",sc:"🌍"},
-      {en:"Gross domestic product",pos:"n.",zh:"國內生產總值",ex:"GDP measures a country's total economic output.",exZh:"GDP衡量一個國家的總體經濟產出。",ml:"📊",sc:"🏛️"},
-      {en:"Recession",pos:"n.",zh:"經濟衰退",ex:"The country entered a recession after the financial crisis.",exZh:"金融危機後，該國陷入了經濟衰退。",ml:"📉",sc:"😟"},
-      {en:"Fluctuate",pos:"v.",zh:"波動",ex:"Exchange rates fluctuate based on global events.",exZh:"匯率根據全球事件波動。",ml:"〰️",sc:"💹"},
-      {en:"Emerging market",pos:"n.",zh:"新興市場",ex:"Investors are looking at emerging markets for growth.",exZh:"投資者正在關注新興市場的成長機會。",ml:"🌱",sc:"📈"},
-      {en:"Fiscal policy",pos:"n.",zh:"財政政策",ex:"The government changed its fiscal policy to boost the economy.",exZh:"政府改變財政政策以提振經濟。",ml:"🏛️",sc:"📊"},
-      {en:"Monopoly",pos:"n.",zh:"壟斷",ex:"Antitrust laws prevent large companies from forming monopolies.",exZh:"反壟斷法阻止大公司形成壟斷。",ml:"🏭",sc:"⚖️"}
-    ]},
-    {id:"w4_language",icon:"📝",name:"語言表達",en:"Language & Expression",words:[
-      {en:"Articulate",pos:"adj./v.",zh:"表達清晰的；清楚表達",ex:"She is very articulate when presenting her ideas.",exZh:"她在表達想法時非常清晰。",ml:"🎤",sc:"💬"},
-      {en:"Concise",pos:"adj.",zh:"簡潔的",ex:"A concise email is more effective than a long one.",exZh:"簡潔的電子郵件比冗長的更有效。",ml:"✂️",sc:"📧"},
-      {en:"Fluent",pos:"adj.",zh:"流利的",ex:"She is fluent in English, French, and Japanese.",exZh:"她能流利地說英語、法語和日語。",ml:"🌍",sc:"🗣️"},
-      {en:"Paraphrase",pos:"v.",zh:"改述、換句話說",ex:"Can you paraphrase that in simpler terms?",exZh:"你能用更簡單的詞改述一下嗎？",ml:"🔄",sc:"💬"},
-      {en:"Context",pos:"n.",zh:"脈絡、上下文",ex:"Always consider the context before responding.",exZh:"在回應之前，請始終考慮上下文。",ml:"📖",sc:"🧠"},
-      {en:"Rhetoric",pos:"n.",zh:"修辭、說服技巧",ex:"Political speeches often rely on powerful rhetoric.",exZh:"政治演講通常依賴強有力的修辭。",ml:"🎭",sc:"🎤"},
-      {en:"Elaborate",pos:"v.",zh:"詳細說明",ex:"Please elaborate on your point with an example.",exZh:"請用一個例子詳細說明你的觀點。",ml:"🔍",sc:"📝"},
-      {en:"Convey",pos:"v.",zh:"傳達、表達",ex:"Good writing conveys ideas clearly and efficiently.",exZh:"好的寫作能清晰有效地傳達想法。",ml:"📨",sc:"💡"},
-      {en:"Nuance",pos:"n.",zh:"細微差異",ex:"Understanding nuance is key to advanced language learning.",exZh:"理解細微差異是高級語言學習的關鍵。",ml:"🎨",sc:"🔍"},
-      {en:"Idiom",pos:"n.",zh:"慣用語、成語",ex:"Learning idioms helps you sound more natural in English.",exZh:"學習慣用語幫助你在英語中聽起來更自然。",ml:"💬",sc:"🌟"}
-    ]},
-    {id:"w4_travel2",icon:"🗺️",name:"深度旅遊",en:"Deep Travel Experience",words:[
-      {en:"Immerse",pos:"v.",zh:"沉浸、深入體驗",ex:"Immerse yourself in the local culture to truly understand it.",exZh:"沉浸在當地文化中才能真正理解它。",ml:"🌊",sc:"🌍"},
-      {en:"Offbeat",pos:"adj.",zh:"非主流的、冷門的",ex:"She prefers offbeat destinations over tourist traps.",exZh:"她更喜歡冷門目的地而非觀光陷阱。",ml:"🗺️",sc:"🏕️"},
-      {en:"Nomadic",pos:"adj.",zh:"遊牧的；四處流浪的",ex:"He lives a nomadic lifestyle, moving to a new city each month.",exZh:"他過著遊牧生活，每個月搬到一個新城市。",ml:"🎒",sc:"🌍"},
-      {en:"Landmark",pos:"n.",zh:"地標",ex:"The Eiffel Tower is Paris's most iconic landmark.",exZh:"艾菲爾鐵塔是巴黎最具代表性的地標。",ml:"🗼",sc:"📸"},
-      {en:"Authentic",pos:"adj.",zh:"正宗的、真實的",ex:"She looks for authentic local food when traveling.",exZh:"她旅行時尋找正宗的當地食物。",ml:"⭐",sc:"🍜"},
-      {en:"Spontaneous",pos:"adj.",zh:"自發的、臨時起意的",ex:"Being spontaneous makes travel more exciting.",exZh:"隨性而為讓旅行更加刺激。",ml:"✨",sc:"🎲"},
-      {en:"Jet lag",pos:"n.",zh:"時差",ex:"It took her three days to recover from jet lag.",exZh:"她花了三天才從時差中恢復。",ml:"✈️",sc:"😴"},
-      {en:"Cultural shock",pos:"n.",zh:"文化衝擊",ex:"Moving abroad often causes a period of cultural shock.",exZh:"移居海外往往會引起一段時間的文化衝擊。",ml:"😲",sc:"🌍"},
-      {en:"Sustainable tourism",pos:"n.",zh:"永續旅遊",ex:"Sustainable tourism protects local environments and communities.",exZh:"永續旅遊保護當地環境和社區。",ml:"♻️",sc:"🌿"},
-      {en:"Panoramic",pos:"adj.",zh:"全景的",ex:"The hotel room had a panoramic view of the mountains.",exZh:"這間飯店房間擁有山脈的全景視野。",ml:"🏔️",sc:"🪟"}
-    ]},
-    {id:"w4_creative",icon:"✨",name:"創意思考",en:"Creativity & Innovation",words:[
-      {en:"Brainstorm",pos:"v.",zh:"腦力激盪",ex:"Let us brainstorm some ideas before the meeting.",exZh:"讓我們在會議前進行一些腦力激盪。",ml:"💭",sc:"💡"},
-      {en:"Prototype",pos:"n.",zh:"原型",ex:"We built a prototype to test the concept.",exZh:"我們建立了一個原型來測試這個概念。",ml:"🔨",sc:"🧪"},
-      {en:"Iterate",pos:"v.",zh:"反覆修改、迭代",ex:"Design teams iterate on their ideas many times.",exZh:"設計團隊對他們的想法反覆修改多次。",ml:"🔄",sc:"🎨"},
-      {en:"Divergent thinking",pos:"n.",zh:"發散性思維",ex:"Divergent thinking generates many solutions to one problem.",exZh:"發散性思維為一個問題產生多種解決方案。",ml:"🌟",sc:"🧠"},
-      {en:"Collaborate",pos:"v.",zh:"合作",ex:"Artists and engineers collaborate to create innovative products.",exZh:"藝術家和工程師合作創造創新產品。",ml:"🤝",sc:"💡"},
-      {en:"Conceptualize",pos:"v.",zh:"構思、概念化",ex:"It can be hard to conceptualize abstract ideas.",exZh:"將抽象想法概念化有時很困難。",ml:"🎨",sc:"💭"},
-      {en:"Feasible",pos:"adj.",zh:"可行的",ex:"Is this plan feasible within our budget?",exZh:"這個計劃在我們的預算內可行嗎？",ml:"✅",sc:"💰"},
-      {en:"Pivot",pos:"v.",zh:"轉向、轉型",ex:"The startup had to pivot when the market changed.",exZh:"當市場改變時，這家新創公司不得不轉型。",ml:"🔄",sc:"🚀"},
-      {en:"Disruption",pos:"n.",zh:"顛覆、破壞性創新",ex:"Digital disruption changed the music industry forever.",exZh:"數位顛覆永遠改變了音樂產業。",ml:"💥",sc:"🎵"},
-      {en:"Refine",pos:"v.",zh:"精煉、改進",ex:"Keep refining your ideas until they are perfect.",exZh:"持續改進你的想法直到完美。",ml:"✨",sc:"🎯"}
-    ]}
-  ]
-];
+const ALL_WEEKS = [[{"id":"w1_workplace","icon":"💼","name":"職場溝通","en":"Workplace Communication","words":[{"en":"Collaborate","pos":"v.","zh":"合作、協作","ex":"We need to collaborate with other departments to finish the project.","exZh":"我們需要與其他部門合作完成這個專案。","ml":"🤝","sc":"👥","root":"co-（共同）+ labor（工作）+ -ate（動詞字尾）→ 一起工作＝合作"},{"en":"Initiative","pos":"n.","zh":"主動性；新方案","ex":"She took the initiative to redesign the entire workflow.","exZh":"她主動重新設計了整個工作流程。","ml":"🚀","sc":"💡","root":"initi-（開始，來自 init-）+ -ative（具…性質）→ 主動開始做事的特質"},{"en":"Delegate","pos":"v.","zh":"授權、指派","ex":"A good manager knows how to delegate tasks effectively.","exZh":"一位好的主管知道如何有效地授權。","ml":"📋","sc":"👔","root":"de-（向下交付）+ leg（指派，legare）+ -ate → 把任務交付出去＝授權"},{"en":"Consensus","pos":"n.","zh":"共識","ex":"We reached a consensus after a long discussion.","exZh":"經過長時間討論後，我們達成了共識。","ml":"🗣️","sc":"✅","root":"con-（共同）+ sens（感覺，sentire）+ -us → 共同的感受＝共識"},{"en":"Proactive","pos":"adj.","zh":"積極主動的","ex":"Being proactive is a key trait for career growth.","exZh":"積極主動是職涯成長的重要特質。","ml":"⚡","sc":"🌟","root":"pro-（事先、向前）+ active（主動的）→ 事先主動的"},{"en":"Accountability","pos":"n.","zh":"責任感、當責","ex":"Accountability means owning your mistakes and fixing them.","exZh":"當責意味著承擔錯誤並加以改正。","ml":"🎯","sc":"⚖️","root":"ac-（加強）+ count（敘述/計算）+ -ability（能力）→ 能被要求說明清楚的責任"},{"en":"Streamline","pos":"v.","zh":"簡化、精簡","ex":"We streamlined the approval process to save time.","exZh":"我們精簡了審批流程以節省時間。","ml":"⚙️","sc":"🔧","root":"stream（水流）+ line（線）→ 像水流一樣順暢的線條＝簡化流程"},{"en":"Deadline","pos":"n.","zh":"截止日期","ex":"Missing a deadline can damage your professional reputation.","exZh":"錯過截止日期會損害你的職業聲譽。","ml":"📅","sc":"⏰","root":"dead（不可超越的）+ line（線）→ 不可超越的界線＝截止期限"},{"en":"Constructive","pos":"adj.","zh":"有建設性的","ex":"Please give constructive feedback, not just criticism.","exZh":"請給予有建設性的意見，而不只是批評。","ml":"🔨","sc":"💬","root":"con-（共同）+ struct（建造，struere）+ -ive → 一起建造的＝有建設性的"},{"en":"Agenda","pos":"n.","zh":"議程","ex":"Could you send me the meeting agenda in advance?","exZh":"可以提前把會議議程寄給我嗎？","ml":"📝","sc":"📊","root":"ag（做，agere）+ -enda（拉丁文，應被做的事）→ 應該被完成的事項＝議程"}]},{"id":"w1_travel","icon":"🌍","name":"旅遊出行","en":"Travel & Transportation","words":[{"en":"Itinerary","pos":"n.","zh":"行程表","ex":"Our travel itinerary includes five cities in two weeks.","exZh":"我們的行程包括兩週內走訪五個城市。","ml":"🗺️","sc":"✈️","root":"iter（旅程、路，拉丁文）+ -ary（與…有關的）→ 與行程有關的"},{"en":"Accommodation","pos":"n.","zh":"住宿","ex":"We booked budget accommodation near the city center.","exZh":"我們在市中心附近訂了平價住宿。","ml":"🏨","sc":"🛏️","root":"ac-（加強）+ com-（共同）+ mod（方式，modus）+ -ation → 調整以符合需求＝容納住宿"},{"en":"Layover","pos":"n.","zh":"中途停留","ex":"We have a three-hour layover in Tokyo.","exZh":"我們在東京有三小時的中途停留。","ml":"🛫","sc":"⏳","root":"lay（停留放置）+ over（在…期間）→ 中途停留的一段時間"},{"en":"Scenic","pos":"adj.","zh":"風景優美的","ex":"The train ride offers a scenic view of the mountains.","exZh":"這段火車旅程提供了壯觀的山景。","ml":"🏔️","sc":"😍","root":"scen（場景，scene）+ -ic（形容詞字尾）→ 有場景美感的"},{"en":"Cruise","pos":"n.","zh":"郵輪旅行","ex":"They celebrated their anniversary on a Mediterranean cruise.","exZh":"他們在地中海郵輪上慶祝週年紀念日。","ml":"🚢","sc":"🌊","root":"源自荷蘭文 kruisen「巡航、交叉航行」→ 郵輪巡航旅行"},{"en":"Vicinity","pos":"n.","zh":"附近地區","ex":"There are several great restaurants in the vicinity of our hotel.","exZh":"我們飯店附近有幾家很棒的餐廳。","ml":"📍","sc":"🗺️","root":"vicin（鄰近，來自 vicus 鄰里）+ -ity（名詞字尾）→ 鄰近的區域"},{"en":"Turbulence","pos":"n.","zh":"亂流","ex":"Please fasten your seatbelt due to turbulence.","exZh":"由於亂流，請繫好安全帶。","ml":"✈️","sc":"😬","root":"turb（騷動混亂，turba）+ -ulence（充滿…的）→ 充滿混亂的＝亂流"},{"en":"Expedition","pos":"n.","zh":"探險；遠征","ex":"They went on an expedition to the Amazon rainforest.","exZh":"他們前往亞馬遜雨林進行探險。","ml":"🧭","sc":"🌿","root":"ex-（向外）+ ped（腳，pes/pedis）+ -ition → 向外邁步出發＝探險遠征"},{"en":"Souvenir","pos":"n.","zh":"紀念品","ex":"She bought a handmade souvenir at the local market.","exZh":"她在當地市集買了一個手工紀念品。","ml":"🎁","sc":"🛍️","root":"sou-（在下方，來自 sub-）+ venir（來，法文源自拉丁 venire）→ 從心底浮現的回憶＝紀念品"},{"en":"Backpacker","pos":"n.","zh":"背包客","ex":"As a backpacker, she preferred hostels over hotels.","exZh":"身為背包客，她喜歡住青年旅館而非飯店。","ml":"🎒","sc":"🗺️","root":"back（背）+ pack（包裹）+ -er（…的人）→ 背著背包旅行的人"}]},{"id":"w1_health","icon":"🏥","name":"健康醫療","en":"Health & Medicine","words":[{"en":"Diagnose","pos":"v.","zh":"診斷","ex":"The doctor diagnosed him with high blood pressure.","exZh":"醫生診斷他患有高血壓。","ml":"🩺","sc":"👨‍⚕️","root":"dia-（貫穿、分辨）+ gnosis（希臘文，認識）→ 分辨清楚並認識病情＝診斷"},{"en":"Chronic","pos":"adj.","zh":"慢性的","ex":"Diabetes is a chronic disease that requires ongoing care.","exZh":"糖尿病是一種需要持續照護的慢性疾病。","ml":"📊","sc":"⏳","root":"chron（希臘文，時間）+ -ic（形容詞字尾）→ 拖了很長時間的＝慢性的"},{"en":"Symptom","pos":"n.","zh":"症狀","ex":"Fatigue and dizziness are common symptoms of anemia.","exZh":"疲勞和頭暈是貧血的常見症狀。","ml":"🌡️","sc":"😷","root":"syn-（共同）+ ptoma（希臘文，落下的事物）→ 隨疾病一起出現的徵兆"},{"en":"Prescription","pos":"n.","zh":"處方箋","ex":"You need a prescription to buy this medication.","exZh":"購買這種藥物需要處方箋。","ml":"💊","sc":"📝","root":"pre-（事先）+ script（寫，scribere）+ -ion → 事先寫下的字條＝處方"},{"en":"Immune system","pos":"n.","zh":"免疫系統","ex":"Exercise helps strengthen your immune system.","exZh":"運動有助於增強你的免疫系統。","ml":"🛡️","sc":"💪","root":"im-（不）+ mun（義務，munus）→ 不受（疾病）侵擾義務的系統"},{"en":"Metabolism","pos":"n.","zh":"新陳代謝","ex":"A faster metabolism helps you burn calories more quickly.","exZh":"較快的新陳代謝幫助你更快燃燒卡路里。","ml":"🔥","sc":"⚡","root":"meta-（改變）+ bol（希臘文，投擲）+ -ism → 不斷改變轉化的過程＝新陳代謝"},{"en":"Recuperate","pos":"v.","zh":"恢復健康","ex":"It took him two months to fully recuperate after surgery.","exZh":"他術後花了兩個月才完全康復。","ml":"🌿","sc":"🏡","root":"re-（重新）+ cuper（取得，來自 capere）+ -ate → 重新取回（健康）＝恢復"},{"en":"Consultation","pos":"n.","zh":"問診；諮詢","ex":"I scheduled a consultation with a nutritionist.","exZh":"我預約了與營養師的諮詢。","ml":"📋","sc":"🩺","root":"con-（共同）+ sult（商議，consulere）+ -ation → 一起商議＝諮詢問診"},{"en":"Inflammation","pos":"n.","zh":"發炎","ex":"Inflammation in the joints causes pain and stiffness.","exZh":"關節發炎會引起疼痛和僵硬。","ml":"🔴","sc":"😣","root":"in-（向內）+ flam（燃燒，flamma 火焰）+ -ation → 向內燃燒發熱＝發炎"},{"en":"Well-being","pos":"n.","zh":"身心健康","ex":"Mental well-being is just as important as physical health.","exZh":"心理健康與身體健康同樣重要。","ml":"🌸","sc":"😊","root":"well（良好地）+ being（存在的狀態）→ 良好的生存狀態＝身心健康"}]},{"id":"w1_finance","icon":"💰","name":"財務理財","en":"Finance & Money","words":[{"en":"Budget","pos":"n.","zh":"預算","ex":"We need to budget carefully for the renovation.","exZh":"我們需要謹慎地為裝修編列預算。","ml":"📊","sc":"💵","root":"源自古法文 bougette「小皮袋」→ 裝錢的小袋子演變為預算"},{"en":"Mortgage","pos":"n.","zh":"房屋貸款","ex":"They took out a 30-year mortgage to buy their home.","exZh":"他們申請了30年期房貸來購屋。","ml":"🏠","sc":"🏦","root":"mort-（死，法文 mort）+ gage（抵押）→ 「死抵押」，清償後即失效的擔保＝房貸"},{"en":"Portfolio","pos":"n.","zh":"投資組合","ex":"Diversifying your portfolio reduces financial risk.","exZh":"多元化你的投資組合可降低財務風險。","ml":"📈","sc":"💼","root":"port（攜帶，portare）+ folio（頁/紙張）→ 攜帶文件的夾子＝投資組合／作品集"},{"en":"Inflation","pos":"n.","zh":"通貨膨脹","ex":"High inflation reduces the purchasing power of money.","exZh":"高通膨會降低貨幣的購買力。","ml":"📉","sc":"😟","root":"in-（向內）+ fla（吹，flare）+ -ation → 向內吹脹＝通貨膨脹"},{"en":"Dividend","pos":"n.","zh":"股息、股利","ex":"The company pays quarterly dividends to its shareholders.","exZh":"公司每季向股東支付股利。","ml":"💹","sc":"😊","root":"divid（分割，dividere）+ -end（被…的事物）→ 被分配出去的東西＝股息"},{"en":"Liability","pos":"n.","zh":"負債","ex":"Personal loans are considered liabilities on your balance sheet.","exZh":"個人貸款在資產負債表上被視為負債。","ml":"⚖️","sc":"📋","root":"liab（束縛，來自 ligare 綁）+ -ility（名詞字尾）→ 被綁住的責任＝負債"},{"en":"Compound interest","pos":"n.","zh":"複利","ex":"Compound interest makes savings grow exponentially over time.","exZh":"複利使儲蓄隨時間呈指數增長。","ml":"📈","sc":"⏳","root":"com-（共同）+ pound（放置，ponere）→ 疊加在一起滾動的利息＝複利"},{"en":"Surplus","pos":"n.","zh":"盈餘","ex":"The government reported a budget surplus this year.","exZh":"政府今年公布了財政盈餘。","ml":"💚","sc":"✅","root":"sur-（超過）+ plus（更多）→ 超過所需的部分＝盈餘"},{"en":"Frugal","pos":"adj.","zh":"節儉的","ex":"Living a frugal lifestyle allowed her to retire early.","exZh":"節儉的生活方式讓她提早退休。","ml":"🏦","sc":"😌","root":"frug-（果實/收穫，frux）→ 珍惜收穫、節省使用的"},{"en":"Asset","pos":"n.","zh":"資產","ex":"Real estate is considered a long-term asset.","exZh":"房地產被認為是一種長期資產。","ml":"🏡","sc":"📊","root":"源自古法文 assez「足夠」→ 足夠支付債務的財產＝資產"}]},{"id":"w1_social","icon":"🗣️","name":"社交對話","en":"Social Conversations","words":[{"en":"Empathize","pos":"v.","zh":"感同身受","ex":"A good leader empathizes with their team members.","exZh":"一個好的領導者能夠與團隊成員感同身受。","ml":"❤️","sc":"🤝","root":"em-（在內，來自 en-）+ path（感受，希臘文 pathos）+ -ize（動詞化）→ 進入他人的感受＝感同身受"},{"en":"Tactful","pos":"adj.","zh":"圓融的","ex":"She was tactful in telling him the bad news.","exZh":"她很圓融地告訴了他這個壞消息。","ml":"🎭","sc":"😊","root":"tact（分寸感，來自 tangere 觸摸）+ -ful（充滿…的）→ 有分寸感的"},{"en":"Reciprocate","pos":"v.","zh":"回報、互惠","ex":"If someone helps you, always try to reciprocate.","exZh":"如果有人幫助你，要盡力回報。","ml":"🔄","sc":"🤝","root":"reci-（向後）+ proc-（向前，來自 pro）+ -ate → 一來一往＝互惠回報"},{"en":"Assertive","pos":"adj.","zh":"自信果斷的","ex":"Being assertive means expressing your needs clearly.","exZh":"果斷意味著清晰地表達自己的需求。","ml":"💪","sc":"🗣️","root":"as-（加強）+ sert（陳述，serere）+ -ive → 堅定陳述立場的"},{"en":"Ambiguous","pos":"adj.","zh":"模糊的","ex":"His reply was ambiguous, so I was not sure what he meant.","exZh":"他的回覆很模糊，所以我不確定他的意思。","ml":"❓","sc":"🤔","root":"ambi-（雙邊、兩者皆）+ ig（驅使，agere）+ -uous → 被兩邊同時拉扯的＝模糊的"},{"en":"Rapport","pos":"n.","zh":"融洽關係","ex":"Building rapport with clients is essential in sales.","exZh":"與客戶建立融洽關係在銷售中非常重要。","ml":"🌟","sc":"🤝","root":"源自法文 rapporter「帶回」→ 彼此往來帶回情感＝融洽關係"},{"en":"Persuasive","pos":"adj.","zh":"有說服力的","ex":"Her persuasive speech convinced everyone in the room.","exZh":"她有說服力的演講說服了房間裡的每個人。","ml":"🎤","sc":"👏","root":"per-（徹底）+ suas（勸說，suadere）+ -ive → 徹底說服的"},{"en":"Anecdote","pos":"n.","zh":"趣聞、小故事","ex":"He shared a funny anecdote about his first day at work.","exZh":"他分享了一個關於第一天上班的有趣故事。","ml":"📖","sc":"😄","root":"an-（不）+ ecdote（希臘文，被公開發表的事）→ 不曾公開發表過的小故事"},{"en":"Etiquette","pos":"n.","zh":"禮節","ex":"Learning dining etiquette is important when doing business abroad.","exZh":"在海外做生意時，學習餐桌禮儀很重要。","ml":"🍽️","sc":"👔","root":"源自法文 étiquette「標籤」→ 貼在門上的行為規範標籤＝禮節"},{"en":"Eloquent","pos":"adj.","zh":"口才好的","ex":"She gave an eloquent speech at the graduation ceremony.","exZh":"她在畢業典禮上發表了一篇精彩的演講。","ml":"🎓","sc":"🌟","root":"e-（向外）+ loqu（說話，loqui）+ -ent → 向外流暢說話的＝口才好的"}]},{"id":"w1_tech","icon":"💻","name":"科技數位","en":"Technology & Digital Life","words":[{"en":"Algorithm","pos":"n.","zh":"演算法","ex":"Social media platforms use algorithms to curate your feed.","exZh":"社群媒體平台使用演算法來安排你的動態消息。","ml":"🤖","sc":"📱","root":"源自9世紀波斯數學家 al-Khwārizmī 的名字轉寫而來＝演算法"},{"en":"Encrypt","pos":"v.","zh":"加密","ex":"All messages on this app are fully encrypted.","exZh":"此應用程式上的所有訊息都經過完整加密。","ml":"🔐","sc":"🛡️","root":"en-（使…）+ crypt（隱藏，希臘文 kryptos）→ 使隱藏＝加密"},{"en":"Bandwidth","pos":"n.","zh":"頻寬","ex":"Streaming 4K video requires a lot of bandwidth.","exZh":"串流4K影片需要大量頻寬。","ml":"📡","sc":"💻","root":"band（頻帶）+ width（寬度）→ 頻帶的寬度＝頻寬"},{"en":"Interface","pos":"n.","zh":"介面","ex":"The new interface is more intuitive than the previous version.","exZh":"新介面比舊版更直觀。","ml":"🖥️","sc":"👆","root":"inter-（之間）+ face（表面）→ 兩者之間接觸的表面＝介面"},{"en":"Automation","pos":"n.","zh":"自動化","ex":"Automation is replacing many repetitive jobs in manufacturing.","exZh":"自動化正在取代製造業中許多重複性工作。","ml":"⚙️","sc":"🏭","root":"auto-（自己，希臘文）+ mat（運轉，matos）+ -ion → 自己運作＝自動化"},{"en":"Cybersecurity","pos":"n.","zh":"網路安全","ex":"Cybersecurity is a top priority for any modern business.","exZh":"網路安全是任何現代企業的首要任務。","ml":"🛡️","sc":"💻","root":"cyber-（來自希臘文 kybernetes 舵手，引申網路控制）+ security（安全）→ 網路的安全"},{"en":"Obsolete","pos":"adj.","zh":"過時的","ex":"Fax machines are becoming obsolete in the digital age.","exZh":"在數位時代，傳真機正逐漸被淘汰。","ml":"📠","sc":"🗑️","root":"ob-（朝向）+ solet（習慣，solere）→ 不再被使用習慣的＝過時的"},{"en":"Prototype","pos":"n.","zh":"原型","ex":"Engineers built a prototype before mass production.","exZh":"工程師在量產前建立了一個原型。","ml":"🔨","sc":"🧪","root":"proto-（最初，希臘文）+ type（型態）→ 最初的型態＝原型"},{"en":"Vulnerable","pos":"adj.","zh":"易受攻擊的","ex":"Outdated software makes your computer vulnerable to attacks.","exZh":"過時的軟體使你的電腦容易受到攻擊。","ml":"⚠️","sc":"🔓","root":"vulner（傷口，vulnus）+ -able（可以被…的）→ 可能被傷害的"},{"en":"Subscription","pos":"n.","zh":"訂閱制","ex":"The app switched from one-time purchase to a subscription model.","exZh":"該應用程式從一次性購買改為訂閱制。","ml":"📲","sc":"💳","root":"sub-（在下方）+ script（寫，scribere）+ -ion → 在下方簽名同意＝訂閱"}]},{"id":"w1_env","icon":"🌿","name":"環境生態","en":"Environment & Nature","words":[{"en":"Sustainable","pos":"adj.","zh":"永續的","ex":"We must adopt sustainable practices to protect the planet.","exZh":"我們必須採用永續做法來保護地球。","ml":"♻️","sc":"🌍","root":"sus-（向上，來自 sub-）+ tain（撐持，tenere）+ -able → 能一直撐持下去的＝永續的"},{"en":"Emission","pos":"n.","zh":"排放量","ex":"Carbon emissions from factories contribute to global warming.","exZh":"工廠排放的碳對全球暖化有所影響。","ml":"🏭","sc":"💨","root":"e-（向外）+ miss（送出，mittere）+ -ion → 向外送出＝排放"},{"en":"Biodiversity","pos":"n.","zh":"生物多樣性","ex":"Deforestation threatens the biodiversity of tropical forests.","exZh":"砍伐森林威脅熱帶雨林的生物多樣性。","ml":"🦋","sc":"🌳","root":"bio-（生命，希臘文）+ divers（多樣的）+ -ity → 生命的多樣性"},{"en":"Renewable","pos":"adj.","zh":"可再生的","ex":"Solar and wind are popular sources of renewable energy.","exZh":"太陽能和風能是常見的可再生能源。","ml":"☀️","sc":"💚","root":"re-（重新）+ new（新的）+ -able → 可以重新變新的＝可再生的"},{"en":"Contaminate","pos":"v.","zh":"污染","ex":"Industrial waste contaminated the nearby river.","exZh":"工業廢料污染了附近的河流。","ml":"☣️","sc":"😟","root":"con-（共同）+ tamin（接觸，來自 tangere）+ -ate → 接觸而使變髒＝污染"},{"en":"Ecosystem","pos":"n.","zh":"生態系統","ex":"Coral reefs are among the most complex ecosystems on Earth.","exZh":"珊瑚礁是地球上最複雜的生態系統之一。","ml":"🪸","sc":"🐠","root":"eco-（住所，希臘文 oikos）+ system（系統）→ 生物居住的系統＝生態系統"},{"en":"Drought","pos":"n.","zh":"旱災","ex":"The prolonged drought has severely affected crop production.","exZh":"長期乾旱嚴重影響了農作物的生產。","ml":"🌵","sc":"☀️","root":"源自古英文 drugaþ「乾燥」+ -t（名詞化）→ 乾旱"},{"en":"Conservation","pos":"n.","zh":"保育","ex":"Wildlife conservation efforts have helped many species recover.","exZh":"野生動物保育努力幫助許多物種恢復。","ml":"🐘","sc":"🌿","root":"con-（完全）+ serv（保存，servare）+ -ation → 完全保存＝保育"},{"en":"Carbon footprint","pos":"n.","zh":"碳足跡","ex":"Flying frequently increases your personal carbon footprint.","exZh":"頻繁搭飛機會增加你的個人碳足跡。","ml":"👣","sc":"✈️","root":"carbon（碳）+ footprint（足跡）→ 碳排放留下的足跡"},{"en":"Deforestation","pos":"n.","zh":"森林砍伐","ex":"Deforestation for agriculture destroys natural habitats.","exZh":"農業開墾造成的砍伐破壞了天然棲息地。","ml":"🌲","sc":"🪓","root":"de-（去除）+ forest（森林）+ -ation → 去除森林＝砍伐"}]}],[{"id":"w2_food","icon":"🍳","name":"飲食料理","en":"Food & Cooking","words":[{"en":"Sauté","pos":"v.","zh":"用少量油快炒","ex":"Sauté the garlic until it turns golden brown.","exZh":"將大蒜用少量油炒至金黃色。","ml":"🥄","sc":"🍳","root":"源自法文 sauter「跳」→ 食材在鍋中跳動快炒"},{"en":"Garnish","pos":"v./n.","zh":"裝飾；裝飾物","ex":"Garnish the dish with fresh herbs before serving.","exZh":"上菜前用新鮮香草裝飾這道菜。","ml":"🌿","sc":"🍽️","root":"源自古法文 garnir「裝備、裝飾」→ 裝飾食物"},{"en":"Marinate","pos":"v.","zh":"醃製","ex":"Marinate the chicken for at least two hours.","exZh":"將雞肉醃製至少兩個小時。","ml":"🫙","sc":"🍗","root":"marin（海洋，marinus）+ -ate → 原指用鹽水醃漬，如海水浸泡＝醃製"},{"en":"Portion","pos":"n.","zh":"份量","ex":"Each portion should contain about 300 calories.","exZh":"每份應包含約300卡路里。","ml":"⚖️","sc":"🍱","root":"port（部分，來自 pars/portio）→ 一份份量"},{"en":"Ingredient","pos":"n.","zh":"食材、原料","ex":"Fresh ingredients make all the difference in cooking.","exZh":"新鮮食材讓烹飪結果天差地遠。","ml":"🥕","sc":"👨‍🍳","root":"in-（在內）+ gred（走，gradi）+ -ient → 走進混合物裡的東西＝食材"},{"en":"Ferment","pos":"v.","zh":"發酵","ex":"Kimchi is made by fermenting vegetables with spices.","exZh":"泡菜是將蔬菜與香料發酵製成的。","ml":"🫧","sc":"🥬","root":"fer-（沸騰，fervere）+ -ment → 沸騰起泡的過程＝發酵"},{"en":"Texture","pos":"n.","zh":"口感、質地","ex":"The texture of this bread is light and fluffy.","exZh":"這款麵包的口感輕盈蓬鬆。","ml":"🍞","sc":"😋","root":"text（編織，texere）+ -ure（名詞字尾）→ 編織出來的質感＝口感"},{"en":"Cuisine","pos":"n.","zh":"料理、菜系","ex":"French cuisine is known for its rich sauces and techniques.","exZh":"法式料理以其濃郁醬汁和技巧聞名。","ml":"🇫🇷","sc":"🍷","root":"源自法文 cuisine「廚房」，來自拉丁 coquina（煮）→ 料理菜系"},{"en":"Savory","pos":"adj.","zh":"鹹香的、美味的","ex":"This savory soup warms you up on a cold day.","exZh":"這道鹹香的湯在寒冷的天氣裡讓你暖和起來。","ml":"🍲","sc":"🥰","root":"來自拉丁 sapor「味道」→ 有滋味的、鹹香的"},{"en":"Simmer","pos":"v.","zh":"小火燉煮","ex":"Let the soup simmer for 30 minutes.","exZh":"讓湯小火燉煮30分鐘。","ml":"🔥","sc":"⏱️","root":"擬聲詞演變自 simper「微微沸騰的聲音」→ 小火慢燉"}]},{"id":"w2_emotion","icon":"💭","name":"情緒心理","en":"Emotions & Psychology","words":[{"en":"Resilience","pos":"n.","zh":"韌性、復原力","ex":"Resilience helps people recover from difficult experiences.","exZh":"韌性幫助人們從艱難經歷中恢復。","ml":"💪","sc":"🌱","root":"re-（向後）+ sili（跳，salire）+ -ence → 彈跳回來的能力＝韌性"},{"en":"Overwhelmed","pos":"adj.","zh":"不知所措的","ex":"She felt overwhelmed by the amount of work she had.","exZh":"她被大量的工作壓得喘不過氣。","ml":"😰","sc":"📚","root":"over-（過度）+ whelm（淹沒，古英文 hwelm）→ 被完全淹沒的"},{"en":"Anxiety","pos":"n.","zh":"焦慮","ex":"Regular exercise can help reduce feelings of anxiety.","exZh":"規律運動可以幫助減輕焦慮感。","ml":"😟","sc":"🧘","root":"angi-（勒緊，angere）+ -ety → 心被勒緊的感覺＝焦慮"},{"en":"Gratitude","pos":"n.","zh":"感恩、感謝","ex":"Expressing gratitude improves your mental health.","exZh":"表達感恩可以改善你的心理健康。","ml":"🙏","sc":"❤️","root":"grat（感謝的，gratus）+ -itude（狀態名詞字尾）→ 感激的狀態"},{"en":"Cope","pos":"v.","zh":"應對、處理","ex":"How do you cope with stress at work?","exZh":"你如何應對工作中的壓力？","ml":"🛠️","sc":"🧠","root":"源自古法文 coup「打擊」→ 應付打擊、處理困境"},{"en":"Optimistic","pos":"adj.","zh":"樂觀的","ex":"Try to stay optimistic even in difficult situations.","exZh":"即使在困難的情況下也要保持樂觀。","ml":"☀️","sc":"😊","root":"opti（最好的，optimus）+ -istic → 相信最好結果的＝樂觀的"},{"en":"Resentment","pos":"n.","zh":"怨恨、憤恨","ex":"Holding onto resentment only hurts yourself.","exZh":"抱著怨恨只會傷害自己。","ml":"😤","sc":"⛓️","root":"re-（反覆）+ sent（感覺，sentire）+ -ment → 反覆感受不滿的情緒"},{"en":"Empathy","pos":"n.","zh":"同理心","ex":"Empathy is the ability to understand others' feelings.","exZh":"同理心是理解他人感受的能力。","ml":"❤️","sc":"🤝","root":"em-（在內）+ path（感受，希臘文）+ -y → 進入他人感受＝同理心"},{"en":"Motivation","pos":"n.","zh":"動力、積極性","ex":"Finding your motivation helps you achieve your goals.","exZh":"找到你的動力幫助你實現目標。","ml":"🎯","sc":"🚀","root":"mot（動，movere）+ -ivation → 使人行動的力量"},{"en":"Perspective","pos":"n.","zh":"觀點、角度","ex":"Changing your perspective can change your attitude.","exZh":"改變你的觀點可以改變你的態度。","ml":"🔭","sc":"💡","root":"per-（徹底）+ spect（看，spicere）+ -ive → 徹底看穿的角度＝觀點"}]},{"id":"w2_education","icon":"🎓","name":"學習教育","en":"Education & Learning","words":[{"en":"Curriculum","pos":"n.","zh":"課程綱要","ex":"The school updated its curriculum to include coding.","exZh":"學校更新了課程綱要，加入了程式設計。","ml":"📚","sc":"🏫","root":"curr（跑，currere）+ -iculum（小型名詞字尾）→ 要跑完的路線＝課程"},{"en":"Comprehend","pos":"v.","zh":"理解、領會","ex":"It takes time to fully comprehend complex theories.","exZh":"完全理解複雜理論需要時間。","ml":"🧠","sc":"💡","root":"com-（完全）+ prehend（抓住，prehendere）→ 完全抓住重點＝理解"},{"en":"Critical thinking","pos":"n.","zh":"批判性思考","ex":"Critical thinking is essential in academic writing.","exZh":"批判性思考在學術寫作中不可或缺。","ml":"🤔","sc":"📝","root":"crit（判斷，希臘文 krinein）+ thinking（思考）→ 判斷式的思考"},{"en":"Proficient","pos":"adj.","zh":"熟練的","ex":"She is proficient in three languages.","exZh":"她精通三種語言。","ml":"⭐","sc":"🌍","root":"pro-（向前）+ fic（做，facere）+ -ient → 向前做得好的＝熟練的"},{"en":"Thesis","pos":"n.","zh":"論文；論點","ex":"He submitted his thesis three months before the deadline.","exZh":"他在截止日期前三個月提交了論文。","ml":"📄","sc":"🎓","root":"希臘文 thesis「放置的論點」→ 論文"},{"en":"Elaborate","pos":"v.","zh":"詳細說明","ex":"Could you elaborate on your main argument?","exZh":"你能詳細說明你的主要論點嗎？","ml":"🔍","sc":"📖","root":"e-（向外）+ labor（工作）+ -ate → 向外多花工夫＝詳細闡述"},{"en":"Evaluate","pos":"v.","zh":"評估、評價","ex":"Teachers evaluate students based on multiple criteria.","exZh":"老師根據多項標準評估學生。","ml":"📊","sc":"✏️","root":"e-（向外）+ valu（價值，valere）+ -ate → 找出價值＝評估"},{"en":"Discipline","pos":"n.","zh":"自律；學科","ex":"Academic discipline is needed to complete a long project.","exZh":"完成長期專案需要學術自律。","ml":"⏰","sc":"📐","root":"discipl（學生，discipulus）+ -ine → 學生所遵循的規範＝紀律／自律"},{"en":"Seminar","pos":"n.","zh":"研討會","ex":"I attended a seminar on digital marketing last week.","exZh":"我上週參加了一場數位行銷研討會。","ml":"🗣️","sc":"👥","root":"semin（種子，semen）+ -ar → 播種思想的聚會＝研討會"},{"en":"Stimulate","pos":"v.","zh":"刺激、激發","ex":"Reading widely stimulates your imagination.","exZh":"廣泛閱讀能激發你的想像力。","ml":"✨","sc":"🧠","root":"stimul（古羅馬用來趕牲畜的尖棒）+ -ate → 用尖棒驅動＝刺激激發"}]},{"id":"w2_law","icon":"⚖️","name":"法律常識","en":"Law & Rights","words":[{"en":"Contract","pos":"n.","zh":"合約","ex":"Make sure you read the contract before signing.","exZh":"簽名前請確保你已閱讀合約。","ml":"📜","sc":"✍️","root":"con-（共同）+ tract（拉，trahere）→ 雙方共同拉在一起＝合約"},{"en":"Liability","pos":"n.","zh":"法律責任","ex":"The company accepted liability for the accident.","exZh":"公司承擔了該事故的法律責任。","ml":"⚖️","sc":"🏛️","root":"liab（束縛，來自 ligare 綁）+ -ility（名詞字尾）→ 被綁住的責任＝負債"},{"en":"Regulate","pos":"v.","zh":"規範、管制","ex":"The government regulates food safety standards.","exZh":"政府管制食品安全標準。","ml":"📋","sc":"🏛️","root":"regul（規則，regula）+ -ate → 依規則行事＝規範"},{"en":"Lawsuit","pos":"n.","zh":"訴訟","ex":"She filed a lawsuit against the company for discrimination.","exZh":"她對該公司提起歧視訴訟。","ml":"⚖️","sc":"👨‍⚖️","root":"law（法律）+ suit（訴求，來自 sequi 跟隨）→ 依法律提出的訴求＝訴訟"},{"en":"Intellectual property","pos":"n.","zh":"智慧財產權","ex":"Intellectual property laws protect your creative work.","exZh":"智慧財產權法保護你的創意作品。","ml":"💡","sc":"🛡️","root":"intellect（理解力，intellegere）+ property（財產）→ 心智產出的財產"},{"en":"Comply","pos":"v.","zh":"遵守、服從","ex":"All employees must comply with company policies.","exZh":"所有員工必須遵守公司政策。","ml":"✅","sc":"📋","root":"com-（完全）+ ply（填滿/摺疊，plere/plicare）→ 完全滿足要求＝遵守"},{"en":"Jurisdiction","pos":"n.","zh":"司法管轄權","ex":"This case falls under federal jurisdiction.","exZh":"此案屬於聯邦司法管轄範圍。","ml":"🗺️","sc":"🏛️","root":"juris（法律，jus）+ dict（說，dicere）+ -ion → 宣告法律權限＝管轄權"},{"en":"Testimony","pos":"n.","zh":"證詞","ex":"The witness gave testimony in court.","exZh":"目擊者在法庭上提供了證詞。","ml":"🎤","sc":"👨‍⚖️","root":"testi（見證人，testis）+ -mony（名詞字尾）→ 見證人所說的話＝證詞"},{"en":"Mediation","pos":"n.","zh":"調解","ex":"The two parties settled through mediation.","exZh":"雙方通過調解達成和解。","ml":"🤝","sc":"⚖️","root":"medi（中間，medius）+ -ation → 站在中間協調＝調解"},{"en":"Penalty","pos":"n.","zh":"罰款；懲罰","ex":"There is a heavy penalty for tax evasion.","exZh":"逃稅將面臨嚴重的罰款。","ml":"💸","sc":"⚠️","root":"pen（懲罰，poena）+ -alty → 懲罰、罰款"}]},{"id":"w2_art","icon":"🎨","name":"藝術文化","en":"Art & Culture","words":[{"en":"Abstract","pos":"adj.","zh":"抽象的","ex":"Abstract art expresses emotions rather than reality.","exZh":"抽象藝術表達情感而非現實。","ml":"🎨","sc":"🖼️","root":"abs-（拉開）+ tract（拉，trahere）→ 從具體事物中抽離＝抽象的"},{"en":"Exhibition","pos":"n.","zh":"展覽","ex":"The photography exhibition runs until the end of the month.","exZh":"攝影展覽持續到本月底。","ml":"🖼️","sc":"🏛️","root":"ex-（向外）+ hibit（拿持，habere）+ -ion → 向外展示＝展覽"},{"en":"Aesthetic","pos":"adj./n.","zh":"美學的；美感","ex":"The aesthetic of this film is breathtaking.","exZh":"這部電影的美學令人嘆為觀止。","ml":"✨","sc":"🎬","root":"希臘文 aisthetikos「感知的」→ 與美感知覺有關的"},{"en":"Portray","pos":"v.","zh":"描繪、刻畫","ex":"The novel portrays life in rural Taiwan.","exZh":"這本小說描繪了台灣農村的生活。","ml":"📖","sc":"🖊️","root":"por-（向前，來自 pro）+ tray（描繪，來自 trahere）→ 向前描繪＝刻畫"},{"en":"Influence","pos":"v./n.","zh":"影響","ex":"Music greatly influences our mood and productivity.","exZh":"音樂極大地影響我們的情緒和生產力。","ml":"🎵","sc":"💫","root":"in-（向內）+ flu（流動，fluere）+ -ence → 流入內心的力量＝影響"},{"en":"Critique","pos":"n./v.","zh":"批評；評論","ex":"The art critic wrote a detailed critique of the painting.","exZh":"藝術評論家寫了一篇關於這幅畫的詳細評論。","ml":"✍️","sc":"🎭","root":"crit（判斷，希臘文 krinein）+ -ique → 判斷評論"},{"en":"Immersive","pos":"adj.","zh":"沉浸式的","ex":"The immersive theater experience left the audience speechless.","exZh":"沉浸式劇場體驗讓觀眾啞口無言。","ml":"🌀","sc":"🎭","root":"im-（向內）+ mers（浸，mergere）+ -ive → 讓人浸入其中的＝沉浸式的"},{"en":"Heritage","pos":"n.","zh":"文化遺產","ex":"We must preserve our cultural heritage for future generations.","exZh":"我們必須為後代保護文化遺產。","ml":"🏛️","sc":"🌍","root":"herit（繼承，來自 heres 繼承人）+ -age → 繼承下來的事物＝遺產"},{"en":"Interpret","pos":"v.","zh":"詮釋、解讀","ex":"Each viewer interprets art differently.","exZh":"每位觀賞者對藝術的詮釋都不同。","ml":"🔍","sc":"🤔","root":"inter-（之間）+ pret（價值/交涉，pretium）→ 在雙方之間傳達意義＝詮釋"},{"en":"Masterpiece","pos":"n.","zh":"傑作","ex":"The Mona Lisa is considered a masterpiece of Renaissance art.","exZh":"蒙娜麗莎被認為是文藝復興藝術的傑作。","ml":"🖼️","sc":"😍","root":"master（大師）+ piece（作品）→ 大師的作品＝傑作"}]},{"id":"w2_sport","icon":"🏃","name":"運動健身","en":"Sports & Fitness","words":[{"en":"Endurance","pos":"n.","zh":"耐力","ex":"Marathon runners need exceptional endurance.","exZh":"馬拉松選手需要出色的耐力。","ml":"🏃","sc":"💪","root":"en-（使）+ dur（堅硬持久，durus）+ -ance → 使堅持下去的能力＝耐力"},{"en":"Agility","pos":"n.","zh":"敏捷性","ex":"Soccer players need agility to change direction quickly.","exZh":"足球員需要敏捷性才能迅速改變方向。","ml":"⚡","sc":"⚽","root":"ag（做/移動，agere）+ -ility → 靈活行動的能力＝敏捷性"},{"en":"Stamina","pos":"n.","zh":"體力、持久力","ex":"Swimming is a great way to build stamina.","exZh":"游泳是增強體力的好方法。","ml":"🏊","sc":"💪","root":"拉丁文 stamen「織布的經線」→ 像織線般不斷延續的體力"},{"en":"Persevere","pos":"v.","zh":"堅持不懈","ex":"You must persevere through the hardest parts of training.","exZh":"你必須在最艱難的訓練階段堅持下去。","ml":"🎯","sc":"🔥","root":"per-（徹底）+ severe（嚴格，severus）→ 徹底嚴格地堅持＝堅持不懈"},{"en":"Qualify","pos":"v.","zh":"取得資格","ex":"She qualified for the national championship.","exZh":"她獲得了全國錦標賽的資格。","ml":"🏆","sc":"🥇","root":"qual（性質，qualis）+ -ify（使…）→ 使具備某種資格"},{"en":"Intensive","pos":"adj.","zh":"密集的","ex":"The team went through an intensive training camp.","exZh":"球隊進行了密集的訓練營。","ml":"🏋️","sc":"😤","root":"in-（向內）+ tens（拉緊，tendere）+ -ive → 拉得很緊的＝密集的"},{"en":"Nutrition","pos":"n.","zh":"營養","ex":"Proper nutrition is just as important as exercise.","exZh":"適當的營養與運動同樣重要。","ml":"🥗","sc":"💊","root":"nutri（哺育，nutrire）+ -tion → 哺育身體所需的＝營養"},{"en":"Rival","pos":"n.","zh":"對手、競爭者","ex":"The two rivals met again in the final.","exZh":"兩位對手再次在決賽中相遇。","ml":"🤼","sc":"🏆","root":"riv（河流，rivus）→ 共用同一條河的人＝競爭對手"},{"en":"Momentum","pos":"n.","zh":"動力、氣勢","ex":"The team gained momentum after scoring the first goal.","exZh":"球隊在首次進球後獲得了氣勢。","ml":"🌊","sc":"⚡","root":"mo（動，movere）+ -mentum（名詞字尾）→ 移動的力量＝動力氣勢"},{"en":"Discipline","pos":"n.","zh":"紀律、自律","ex":"Athletic success requires years of discipline.","exZh":"運動上的成功需要多年的自律。","ml":"⏰","sc":"🏅","root":"discipl（學生，discipulus）+ -ine → 學生所遵循的規範＝紀律／自律"}]},{"id":"w2_media","icon":"📱","name":"媒體傳播","en":"Media & Communication","words":[{"en":"Broadcast","pos":"v./n.","zh":"播送；廣播","ex":"The event will be broadcast live on television.","exZh":"該活動將在電視上現場直播。","ml":"📺","sc":"📡","root":"broad（廣泛地）+ cast（投擲，古北歐 kasta）→ 廣泛地投放出去＝播送"},{"en":"Clickbait","pos":"n.","zh":"標題黨；釣魚內容","ex":"Clickbait headlines are designed to trick you into clicking.","exZh":"標題黨設計來誘騙你點擊。","ml":"🎣","sc":"📰","root":"click（點擊）+ bait（誘餌）→ 誘使點擊的內容"},{"en":"Viral","pos":"adj.","zh":"病毒式傳播的","ex":"The video went viral and got ten million views.","exZh":"這個影片病毒式傳播，獲得了一千萬次觀看。","ml":"🔥","sc":"📲","root":"vir（病毒，virus）+ -al → 像病毒一樣傳播的"},{"en":"Credibility","pos":"n.","zh":"可信度","ex":"A journalist must protect their credibility at all times.","exZh":"記者必須時時維護自己的可信度。","ml":"🎖️","sc":"📰","root":"cred（相信，credere）+ -ibility → 值得相信的程度＝可信度"},{"en":"Narrative","pos":"n.","zh":"敘事、說法","ex":"The media shapes the public narrative on many issues.","exZh":"媒體塑造了許多議題的公共敘事。","ml":"📖","sc":"🗣️","root":"narr（敘述，narrare）+ -ative → 敘事、說法"},{"en":"Bias","pos":"n.","zh":"偏見、偏頗","ex":"News sources can sometimes show political bias.","exZh":"新聞來源有時可能表現出政治偏頗。","ml":"⚖️","sc":"🗞️","root":"源自古法文 biais「斜的」→ 傾斜的立場＝偏見"},{"en":"Circulation","pos":"n.","zh":"發行量；流通","ex":"The magazine has a circulation of one million copies.","exZh":"這本雜誌的發行量為一百萬份。","ml":"📰","sc":"📊","root":"circ（圓，circus）+ -ulation → 繞圈流通＝發行量流通"},{"en":"Engage","pos":"v.","zh":"吸引、接觸","ex":"Good content engages the audience from the start.","exZh":"好的內容從一開始就能吸引觀眾。","ml":"✨","sc":"👥","root":"en-（使）+ gage（承諾/抵押）→ 使投入承諾＝吸引參與"},{"en":"Propaganda","pos":"n.","zh":"宣傳","ex":"It is important to distinguish news from propaganda.","exZh":"區分新聞和宣傳非常重要。","ml":"📢","sc":"⚠️","root":"拉丁文 propagare「繁殖擴散」→ 擴散出去的訊息＝宣傳"},{"en":"Platform","pos":"n.","zh":"平台","ex":"Social media platforms have billions of active users.","exZh":"社群媒體平台擁有數十億活躍用戶。","ml":"📱","sc":"🌐","root":"plat（平坦，法文 plat）+ form（形式）→ 平坦的架構＝平台"}]}],[{"id":"w3_business","icon":"🏢","name":"商業談判","en":"Business & Negotiation","words":[{"en":"Negotiate","pos":"v.","zh":"協商、談判","ex":"Both sides negotiated for three days before reaching a deal.","exZh":"雙方協商了三天才達成協議。","ml":"🤝","sc":"💼","root":"neg-（不）+ otium（拉丁文，閒暇）+ -ate → 不得閒忙於交涉＝談判"},{"en":"Proposal","pos":"n.","zh":"提案、建議書","ex":"Please submit your proposal by Friday.","exZh":"請在星期五之前提交你的提案。","ml":"📋","sc":"✍️","root":"pro-（向前）+ pos（放置，ponere）+ -al → 向前提出＝提案"},{"en":"Revenue","pos":"n.","zh":"收益、營業額","ex":"The company's revenue increased by 20% this year.","exZh":"公司今年的營業額增加了20%。","ml":"💰","sc":"📈","root":"re-（重新）+ venue（來，venire）→ 重新流入的錢＝收益"},{"en":"Stakeholder","pos":"n.","zh":"利害關係人","ex":"We need to consult all stakeholders before making a decision.","exZh":"我們需要在做決定前諮詢所有利害關係人。","ml":"👥","sc":"🏢","root":"stake（股份/賭注）+ holder（持有者）→ 持有利害關係的人"},{"en":"Leverage","pos":"n./v.","zh":"槓桿；利用","ex":"Use your skills as leverage in salary negotiations.","exZh":"在薪資談判中，利用你的技能作為籌碼。","ml":"⚖️","sc":"💡","root":"lever（槓桿，來自 levare 舉起）+ -age → 用槓桿施力＝利用籌碼"},{"en":"Merger","pos":"n.","zh":"合併","ex":"The merger between the two companies created the industry leader.","exZh":"兩家公司的合併創造了行業領導者。","ml":"🔗","sc":"🏢","root":"merg（浸入/合併，mergere）+ -er → 合而為一＝合併"},{"en":"Concession","pos":"n.","zh":"讓步","ex":"Both sides made concessions to reach an agreement.","exZh":"雙方都做出了讓步以達成協議。","ml":"🤝","sc":"⚖️","root":"con-（共同）+ cess（讓步/走，cedere）+ -ion → 一起讓一步＝讓步"},{"en":"Benchmark","pos":"n.","zh":"基準、標竿","ex":"Set a benchmark for success before starting the project.","exZh":"在開始專案前設定成功的基準。","ml":"📏","sc":"🎯","root":"bench（長凳/工作台）+ mark（標記）→ 在工作台上做的標記＝基準"},{"en":"Overhead","pos":"n.","zh":"間接費用、營運成本","ex":"We need to reduce our overhead to improve profit margins.","exZh":"我們需要降低間接費用以提高利潤率。","ml":"💸","sc":"📉","root":"over（在上方）+ head（頂端）→ 高於基本成本之上的開銷"},{"en":"Turnaround","pos":"n.","zh":"轉機；週轉時間","ex":"The company made an impressive turnaround in just one year.","exZh":"公司在短短一年內實現了令人印象深刻的轉機。","ml":"🔄","sc":"📈","root":"turn（轉）+ around（周圍）→ 轉一圈回來＝轉機"}]},{"id":"w3_science","icon":"🔬","name":"科學探索","en":"Science & Discovery","words":[{"en":"Hypothesis","pos":"n.","zh":"假設","ex":"The scientist formed a hypothesis before conducting the experiment.","exZh":"科學家在進行實驗前形成了假設。","ml":"💭","sc":"🔬","root":"hypo-（在下方）+ thesis（希臘文，放置的論點）→ 底下先放置的假設"},{"en":"Variable","pos":"n.","zh":"變數","ex":"Control all variables to ensure accurate results.","exZh":"控制所有變數以確保準確的結果。","ml":"📊","sc":"🧪","root":"vari（改變，variare）+ -able → 可以改變的＝變數"},{"en":"Phenomenon","pos":"n.","zh":"現象","ex":"Scientists are studying the phenomenon of climate change.","exZh":"科學家正在研究氣候變遷這一現象。","ml":"🌍","sc":"🔭","root":"希臘文 phainein「顯現」→ 顯現出來的現象"},{"en":"Innovative","pos":"adj.","zh":"創新的","ex":"The innovative design won an international award.","exZh":"這個創新設計贏得了國際獎項。","ml":"💡","sc":"🏆","root":"in-（向內）+ nov（新的，novus）+ -ative → 帶入新事物的＝創新的"},{"en":"Theory","pos":"n.","zh":"理論","ex":"Darwin's theory of evolution changed how we see life.","exZh":"達爾文的進化論改變了我們對生命的看法。","ml":"📚","sc":"🧬","root":"希臘文 theoria「觀看、思辨」→ 理論"},{"en":"Analyze","pos":"v.","zh":"分析","ex":"Analyze the data carefully before drawing conclusions.","exZh":"在得出結論之前仔細分析數據。","ml":"🔍","sc":"📊","root":"ana-（向上、徹底）+ lyze（鬆開，希臘文 lyein）→ 徹底拆解＝分析"},{"en":"Breakthrough","pos":"n.","zh":"突破","ex":"The discovery of penicillin was a major medical breakthrough.","exZh":"青黴素的發現是重大的醫學突破。","ml":"🎉","sc":"💊","root":"break（打破）+ through（穿越）→ 打破並穿越限制＝突破"},{"en":"Replicate","pos":"v.","zh":"複製、重複","ex":"Other scientists tried to replicate the experiment.","exZh":"其他科學家試圖重複這個實驗。","ml":"🔄","sc":"🔬","root":"re-（再次）+ plic（摺疊，plicare）+ -ate → 再摺一次＝複製"},{"en":"Microscopic","pos":"adj.","zh":"微觀的、極小的","ex":"Bacteria are microscopic organisms invisible to the naked eye.","exZh":"細菌是肉眼看不見的微觀生物。","ml":"🔬","sc":"👁️","root":"micro-（微小，希臘文）+ scop（看，skopein）+ -ic → 用來看極小事物的＝微觀的"},{"en":"Sustainable","pos":"adj.","zh":"可持續的","ex":"Sustainable agriculture produces food without harming the environment.","exZh":"可持續農業在不損害環境的情況下生產食物。","ml":"🌱","sc":"🌍","root":"sus-（向上，來自 sub-）+ tain（撐持，tenere）+ -able → 能一直撐持下去的＝永續的"}]},{"id":"w3_city","icon":"🏙️","name":"城市生活","en":"City & Urban Life","words":[{"en":"Commute","pos":"v./n.","zh":"通勤","ex":"She commutes two hours every day by train.","exZh":"她每天搭火車通勤兩個小時。","ml":"🚆","sc":"⏰","root":"com-（完全）+ mut（改變，mutare）+ -e → 改變路徑往返＝通勤"},{"en":"Infrastructure","pos":"n.","zh":"基礎建設","ex":"The city invested heavily in its transportation infrastructure.","exZh":"這座城市大力投資了其交通基礎建設。","ml":"🏗️","sc":"🌆","root":"infra-（在下方）+ structure（建構）→ 底層建構＝基礎建設"},{"en":"Pedestrian","pos":"n.","zh":"行人","ex":"This area is designated for pedestrians only.","exZh":"這個區域僅供行人使用。","ml":"🚶","sc":"🛤️","root":"ped（腳，pes/pedis）+ -estrian → 用腳走路的人＝行人"},{"en":"Congestion","pos":"n.","zh":"擁塞、堵車","ex":"Traffic congestion is a major problem in the city center.","exZh":"交通擁塞是市中心的主要問題。","ml":"🚗","sc":"😤","root":"con-（共同）+ gest（堆積，gerere）+ -ion → 一起堆積阻塞＝擁塞"},{"en":"Renovate","pos":"v.","zh":"翻新、改建","ex":"They plan to renovate the old building into apartments.","exZh":"他們計劃將舊建築翻新成公寓。","ml":"🔨","sc":"🏠","root":"re-（重新）+ nov（新，novus）+ -ate → 使變新＝翻新"},{"en":"District","pos":"n.","zh":"地區、行政區","ex":"The arts district is full of galleries and theaters.","exZh":"藝術區裡充滿了畫廊和劇院。","ml":"🗺️","sc":"🏛️","root":"di-（分開）+ strict（拉緊/限制，stringere）→ 被劃分限定的區域＝行政區"},{"en":"Resident","pos":"n.","zh":"居民","ex":"Local residents protested against the new development.","exZh":"當地居民抗議新的開發計劃。","ml":"🏘️","sc":"✊","root":"re-（反覆）+ sid（坐/居住，sedere）+ -ent → 一直坐在那裡的＝居民"},{"en":"Public transit","pos":"n.","zh":"大眾運輸","ex":"Using public transit reduces your carbon footprint.","exZh":"使用大眾運輸可以減少你的碳足跡。","ml":"🚌","sc":"♻️","root":"public（公共的）+ transit（通過，來自 transire 穿越）→ 公共的通行運輸"},{"en":"Affordable","pos":"adj.","zh":"負擔得起的","ex":"Finding affordable housing in the city is challenging.","exZh":"在城市裡找到負擔得起的住房很有挑戰性。","ml":"🏠","sc":"💰","root":"af-（加強）+ ford（能力，古英文 geforðian）+ -able → 能力可負擔的"},{"en":"Vibrant","pos":"adj.","zh":"充滿活力的","ex":"The night market creates a vibrant atmosphere.","exZh":"夜市創造了充滿活力的氛圍。","ml":"✨","sc":"🌆","root":"vibr（震動，vibrare）+ -ant → 振動有活力的"}]},{"id":"w3_relationship","icon":"❤️","name":"人際關係","en":"Relationships & Family","words":[{"en":"Commitment","pos":"n.","zh":"承諾、投入","ex":"A strong relationship requires commitment from both sides.","exZh":"穩固的關係需要雙方的承諾。","ml":"💍","sc":"❤️","root":"com-（完全）+ mit（送出，mittere）+ -ment → 完全交付出去＝承諾"},{"en":"Compromise","pos":"v./n.","zh":"妥協","ex":"Successful couples know how to compromise.","exZh":"成功的夫妻知道如何妥協。","ml":"⚖️","sc":"🤝","root":"com-（共同）+ promise（承諾，promittere）→ 共同承諾讓步＝妥協"},{"en":"Nurture","pos":"v.","zh":"培育、養育","ex":"Parents nurture their children's talents and interests.","exZh":"父母培養孩子的才能和興趣。","ml":"🌱","sc":"👨‍👩‍👧","root":"來自 nourish 的同源詞，nutri（哺育）→ 養育、培育"},{"en":"Boundary","pos":"n.","zh":"界線、界限","ex":"Setting clear boundaries is important in any relationship.","exZh":"在任何關係中設定清晰的界限都很重要。","ml":"🚧","sc":"💬","root":"bound（邊界，來自 bodne）+ -ary → 界線"},{"en":"Trust","pos":"n.","zh":"信任","ex":"Trust is the foundation of every healthy relationship.","exZh":"信任是每段健康關係的基礎。","ml":"🔑","sc":"🤝","root":"源自古北歐 traust「信心、堅固」→ 信任"},{"en":"Conflict","pos":"n.","zh":"衝突","ex":"Resolving conflict calmly strengthens relationships.","exZh":"冷靜地解決衝突可以加強關係。","ml":"⚡","sc":"💬","root":"con-（共同）+ flict（碰撞，fligere）+ -t → 互相碰撞＝衝突"},{"en":"Affection","pos":"n.","zh":"情感、愛意","ex":"She showed affection by cooking a special dinner.","exZh":"她通過烹製特別的晚餐來表達愛意。","ml":"🥰","sc":"❤️","root":"af-（朝向，加強）+ fect（做/影響，facere）+ -ion → 被感染影響的情感＝愛意"},{"en":"Sibling","pos":"n.","zh":"兄弟姐妹","ex":"She has a close bond with her younger sibling.","exZh":"她與弟弟妹妹關係親密。","ml":"👫","sc":"💕","root":"古英文 sib「親屬」+ -ling（小/親近）→ 兄弟姐妹"},{"en":"Reconcile","pos":"v.","zh":"和解","ex":"They reconciled after a long period of silence.","exZh":"他們在長時間的沉默後和解了。","ml":"🤝","sc":"🕊️","root":"re-（重新）+ con-（共同）+ cile（召集，calare）→ 重新召集在一起＝和解"},{"en":"Cherish","pos":"v.","zh":"珍惜","ex":"Cherish the moments you spend with the people you love.","exZh":"珍惜你與所愛之人共度的時光。","ml":"💎","sc":"❤️","root":"cher（親愛的，法文 cher）+ -ish（動詞化）→ 使珍愛＝珍惜"}]},{"id":"w3_global","icon":"🌐","name":"國際時事","en":"Global Affairs","words":[{"en":"Diplomat","pos":"n.","zh":"外交官","ex":"The diplomat represented her country in the UN meeting.","exZh":"外交官代表她的國家出席聯合國會議。","ml":"🎖️","sc":"🌍","root":"diplo（希臘文，摺疊成雙的官方文件）+ -mat → 持有官方文件的人＝外交官"},{"en":"Sanction","pos":"n.","zh":"制裁","ex":"Economic sanctions were imposed on the country.","exZh":"對該國實施了經濟制裁。","ml":"⚖️","sc":"🏛️","root":"sanct（神聖的，sancire 立法）+ -ion → 依法立制裁"},{"en":"Alliance","pos":"n.","zh":"聯盟","ex":"The two countries formed a military alliance.","exZh":"兩國建立了軍事聯盟。","ml":"🤝","sc":"🌍","root":"al-（向）+ li（綁，ligare）+ -ance → 綁在一起＝聯盟"},{"en":"Sovereignty","pos":"n.","zh":"主權","ex":"Every nation has the right to its own sovereignty.","exZh":"每個國家都有其主權的權利。","ml":"🏴","sc":"🗺️","root":"sover（在上方，來自 super）+ -eignty → 在最高位置的權力＝主權"},{"en":"Refugee","pos":"n.","zh":"難民","ex":"Millions of refugees fled the war-torn region.","exZh":"數百萬難民逃離了戰亂地區。","ml":"🏕️","sc":"✊","root":"re-（向後）+ fug（逃跑，fugere）+ -ee（被動的人）→ 逃跑而來的人＝難民"},{"en":"Treaty","pos":"n.","zh":"條約","ex":"The two nations signed a peace treaty.","exZh":"兩國簽署了和平條約。","ml":"📜","sc":"🕊️","root":"treat（協商，來自 tractare）+ -y → 協商後的結果＝條約"},{"en":"Embargo","pos":"n.","zh":"禁運、貿易禁令","ex":"An oil embargo was placed on the country.","exZh":"對該國實施了石油禁運。","ml":"🚫","sc":"⛽","root":"em-（使）+ bargo（阻擋，西班牙文 barra 欄杆）→ 使受阻＝禁運"},{"en":"Multilateral","pos":"adj.","zh":"多邊的","ex":"This issue requires a multilateral approach.","exZh":"這個問題需要多邊方法來處理。","ml":"🌐","sc":"🤝","root":"multi-（多）+ later（邊，latus）+ -al → 多邊的"},{"en":"Transparency","pos":"n.","zh":"透明度","ex":"Governments should practice transparency with citizens.","exZh":"政府應對公民保持透明度。","ml":"🔍","sc":"🏛️","root":"trans-（穿越）+ par（出現，parere）+ -ency → 能被看穿的程度＝透明度"},{"en":"Humanitarian","pos":"adj.","zh":"人道主義的","ex":"The UN sent humanitarian aid to the disaster zone.","exZh":"聯合國向災區提供了人道主義援助。","ml":"❤️","sc":"🌍","root":"human（人類，humanus）+ -itarian → 關心人類福祉的＝人道主義的"}]},{"id":"w3_career","icon":"🎯","name":"職涯規劃","en":"Career Development","words":[{"en":"Competence","pos":"n.","zh":"能力、勝任度","ex":"Technical competence alone is not enough for leadership roles.","exZh":"僅靠技術能力不足以勝任領導職位。","ml":"💼","sc":"⭐","root":"com-（共同）+ pet（尋求，petere）+ -ence → 一起爭取而具備的能力"},{"en":"Mentor","pos":"n.","zh":"導師、顧問","ex":"Having a mentor can accelerate your career growth.","exZh":"擁有一位導師可以加速你的職業成長。","ml":"👨‍🏫","sc":"🌱","root":"源自荷馬史詩《奧德賽》忠實顧問 Mentor 的名字＝導師"},{"en":"Networking","pos":"n.","zh":"人脈建立","ex":"Networking events help you meet potential employers.","exZh":"人脈活動幫助你認識潛在的雇主。","ml":"🤝","sc":"💼","root":"net（網）+ work（工作）+ -ing → 編織人脈網絡"},{"en":"Promotion","pos":"n.","zh":"晉升","ex":"She earned a promotion after exceeding her targets.","exZh":"她在超越目標後獲得了晉升。","ml":"🎉","sc":"⬆️","root":"pro-（向前）+ mot（移動，movere）+ -ion → 向前推動＝晉升"},{"en":"Transition","pos":"n.","zh":"轉換、過渡","ex":"He made a smooth transition from engineering to management.","exZh":"他從工程順利過渡到管理。","ml":"🔄","sc":"🛤️","root":"trans-（穿越）+ it（走，ire）+ -ion → 走過去＝過渡"},{"en":"Portfolio","pos":"n.","zh":"作品集","ex":"A strong portfolio helps you stand out to employers.","exZh":"一份優秀的作品集幫助你在雇主中脫穎而出。","ml":"📁","sc":"✨","root":"port（攜帶，portare）+ folio（頁/紙張）→ 攜帶文件的夾子＝投資組合／作品集"},{"en":"Internship","pos":"n.","zh":"實習","ex":"She completed an internship at a top tech company.","exZh":"她在一家頂尖科技公司完成了實習。","ml":"🏢","sc":"📚","root":"intern（內部的，internus）+ -ship（身分/狀態）→ 在內部實習的身分"},{"en":"Burnout","pos":"n.","zh":"過勞、職業倦怠","ex":"Working without rest leads to burnout.","exZh":"不休息地工作會導致職業倦怠。","ml":"🔥","sc":"😮‍💨","root":"burn（燃燒）+ out（完全）→ 完全燒盡＝過勞"},{"en":"Upskill","pos":"v.","zh":"提升技能","ex":"It is important to upskill regularly in a fast-changing market.","exZh":"在快速變化的市場中，定期提升技能很重要。","ml":"📈","sc":"🎓","root":"up（向上）+ skill（技能）→ 向上提升技能"},{"en":"Outcome","pos":"n.","zh":"結果、成果","ex":"Focus on the outcome, not just the process.","exZh":"專注於結果，而不只是過程。","ml":"🎯","sc":"✅","root":"out（向外）+ come（來）→ 產生出來的結果"}]},{"id":"w3_home","icon":"🏠","name":"居家生活","en":"Home & Daily Life","words":[{"en":"Declutter","pos":"v.","zh":"整理、清除雜物","ex":"Decluttering your home can reduce stress.","exZh":"整理家中雜物可以減少壓力。","ml":"🗑️","sc":"😌","root":"de-（去除）+ clutter（雜亂）→ 去除雜亂"},{"en":"Lease","pos":"n.","zh":"租約","ex":"She signed a one-year lease for the apartment.","exZh":"她簽了一年的公寓租約。","ml":"📝","sc":"🏠","root":"源自古法文 lais「留下、租借」→ 租約"},{"en":"Utility","pos":"n.","zh":"公用事業；水電費","ex":"The monthly utilities include electricity and water.","exZh":"每月的公用費用包括電費和水費。","ml":"💡","sc":"🏠","root":"util（有用的，utilis）+ -ity → 有用的東西＝公用事業"},{"en":"Appliance","pos":"n.","zh":"家電","ex":"The new appliance came with a two-year warranty.","exZh":"這款新家電附有兩年保固。","ml":"🖥️","sc":"🔧","root":"ap-（加強）+ pli（應用，plicare）+ -ance → 應用來做事的器具＝家電"},{"en":"Maintenance","pos":"n.","zh":"維護、保養","ex":"Regular maintenance keeps your home in good condition.","exZh":"定期維護使你的家保持良好狀態。","ml":"🔧","sc":"🏠","root":"main-（用手，manus）+ ten（拿持，tenere）+ -ance → 用手拿住不放＝維護保養"},{"en":"Renovation","pos":"n.","zh":"裝修、翻新","ex":"The kitchen renovation took three months to complete.","exZh":"廚房裝修花了三個月才完成。","ml":"🔨","sc":"🏗️","root":"re-（重新）+ nov（新，novus）+ -ation → 重新使其變新的過程＝裝修"},{"en":"Mortgage","pos":"n.","zh":"房貸","ex":"They paid off their mortgage in 20 years.","exZh":"他們在20年內還清了房貸。","ml":"🏦","sc":"🏠","root":"mort-（死，法文 mort）+ gage（抵押）→ 「死抵押」，清償後即失效的擔保＝房貸"},{"en":"Spacious","pos":"adj.","zh":"寬敞的","ex":"The living room is spacious and full of natural light.","exZh":"客廳寬敞且充滿自然光。","ml":"🌅","sc":"🏠","root":"spac（空間，spatium）+ -ious → 有空間的＝寬敞的"},{"en":"Adjacent","pos":"adj.","zh":"相鄰的","ex":"Our apartment is adjacent to a beautiful park.","exZh":"我們的公寓與一座美麗的公園相鄰。","ml":"📍","sc":"🌳","root":"ad-（靠近）+ jac（躺/位於，jacere）+ -ent → 靠著躺在旁邊的＝相鄰的"},{"en":"Deposit","pos":"n.","zh":"押金、定金","ex":"The landlord required two months' rent as a deposit.","exZh":"房東要求兩個月的租金作為押金。","ml":"💵","sc":"🏠","root":"de-（向下）+ posit（放置，ponere）→ 向下放置＝押金/存放"}]}],[{"id":"w4_leadership","icon":"👑","name":"領導力","en":"Leadership & Management","words":[{"en":"Visionary","pos":"adj.","zh":"有遠見的","ex":"A visionary leader sees opportunities others miss.","exZh":"有遠見的領導者能看到他人錯過的機會。","ml":"🔭","sc":"💡","root":"vis（看，videre）+ -ionary → 能看見未來的＝有遠見的"},{"en":"Empower","pos":"v.","zh":"賦權、授能","ex":"Great leaders empower their teams to make decisions.","exZh":"偉大的領導者賦予團隊做決定的權力。","ml":"💪","sc":"🌟","root":"em-（使）+ power（權力）→ 使擁有權力＝賦權"},{"en":"Integrity","pos":"n.","zh":"誠信、正直","ex":"Integrity is the most important quality of a good leader.","exZh":"誠信是優秀領導者最重要的品質。","ml":"⚖️","sc":"🏆","root":"integr（完整的，integer）+ -ity → 完整不受損的品格＝誠信"},{"en":"Transparent","pos":"adj.","zh":"透明的","ex":"Being transparent with your team builds trust.","exZh":"對團隊保持透明可以建立信任。","ml":"🔍","sc":"🤝","root":"trans-（穿越）+ par（出現，parere）+ -ent → 能被看穿的＝透明的"},{"en":"Micromanage","pos":"v.","zh":"過度干涉、微管理","ex":"Avoid micromanaging your employees to boost morale.","exZh":"避免對員工過度干涉以提振士氣。","ml":"🔎","sc":"😤","root":"micro-（微小）+ manage（管理）→ 過度細節的管理"},{"en":"Resilient","pos":"adj.","zh":"有韌性的","ex":"Resilient leaders recover quickly from setbacks.","exZh":"有韌性的領導者能迅速從挫折中恢復。","ml":"💪","sc":"🌱","root":"re-（向後）+ sili（跳，salire）+ -ent → 能彈跳回來的＝有韌性的"},{"en":"Inclusive","pos":"adj.","zh":"包容的","ex":"An inclusive workplace values everyone's contribution.","exZh":"包容的工作場所重視每個人的貢獻。","ml":"🌈","sc":"👥","root":"in-（向內）+ clus（包含，claudere）+ -ive → 把大家包含在內的"},{"en":"Strategic","pos":"adj.","zh":"戰略性的","ex":"Strategic thinking is essential for long-term success.","exZh":"戰略性思維對長期成功至關重要。","ml":"♟️","sc":"🎯","root":"strateg（希臘文，將軍統帥術，stratos 軍隊）+ -ic → 統帥謀略的＝戰略性的"},{"en":"Inspire","pos":"v.","zh":"激勵、啟發","ex":"A great speech can inspire thousands of people.","exZh":"一篇精彩的演講可以激勵數千人。","ml":"✨","sc":"🎤","root":"in-（向內）+ spire（呼吸，spirare）→ 把精神吹入＝激勵"},{"en":"Adaptable","pos":"adj.","zh":"適應力強的","ex":"Adaptable leaders thrive in times of change.","exZh":"適應力強的領導者在變革時期茁壯成長。","ml":"🔄","sc":"🌊","root":"ad-（朝向）+ apt（適合，aptus）+ -able → 能調整適合的＝適應力強的"}]},{"id":"w4_future","icon":"🚀","name":"未來科技","en":"Future Technology","words":[{"en":"Artificial intelligence","pos":"n.","zh":"人工智慧","ex":"Artificial intelligence is transforming many industries.","exZh":"人工智慧正在改變許多行業。","ml":"🤖","sc":"💻","root":"art（技藝，ars）+ fic（做，facere）→ 人造出來的智慧"},{"en":"Virtual reality","pos":"n.","zh":"虛擬實境","ex":"Virtual reality is used for training in medical education.","exZh":"虛擬實境被用於醫學教育訓練。","ml":"🥽","sc":"🧠","root":"virtu（效力/美德，virtus）+ -al → 具有近乎真實效力的虛擬實境"},{"en":"Blockchain","pos":"n.","zh":"區塊鏈","ex":"Blockchain technology ensures secure digital transactions.","exZh":"區塊鏈技術確保安全的數位交易。","ml":"🔗","sc":"🛡️","root":"block（區塊）+ chain（鏈）→ 一串相連的區塊"},{"en":"Autonomous","pos":"adj.","zh":"自主的","ex":"Autonomous vehicles could reduce traffic accidents.","exZh":"自動駕駛汽車可能減少交通事故。","ml":"🚗","sc":"🛤️","root":"auto-（自己）+ nom（法則，希臘文 nomos）+ -ous → 自訂法則的＝自主的"},{"en":"Disruptive","pos":"adj.","zh":"顛覆性的","ex":"Smartphones were a disruptive technology when introduced.","exZh":"智慧型手機問世時是一種顛覆性技術。","ml":"💥","sc":"📱","root":"dis-（分開）+ rupt（破裂，rumpere）+ -ive → 使破裂分開的＝顛覆性的"},{"en":"Augmented reality","pos":"n.","zh":"擴增實境","ex":"Augmented reality overlays digital info onto the real world.","exZh":"擴增實境將數位資訊疊加到真實世界上。","ml":"👓","sc":"🌐","root":"aug（增加，augere）+ -mented → 被增添過的真實"},{"en":"Quantum computing","pos":"n.","zh":"量子運算","ex":"Quantum computing could solve problems beyond current computers.","exZh":"量子運算可以解決超出現有電腦能力的問題。","ml":"⚛️","sc":"💡","root":"quant（多少，quantus）+ -um → 一份一份的量子；computing（運算）"},{"en":"Biometric","pos":"adj.","zh":"生物辨識的","ex":"Biometric data includes fingerprints and facial recognition.","exZh":"生物辨識數據包括指紋和臉部識別。","ml":"👆","sc":"🔐","root":"bio-（生命）+ metr（測量，希臘文 metron）+ -ic → 測量生命特徵的"},{"en":"Scalable","pos":"adj.","zh":"可擴展的","ex":"We need a scalable solution that grows with the business.","exZh":"我們需要一個能隨業務成長的可擴展解決方案。","ml":"📈","sc":"🏗️","root":"scal（階梯/等級，scala）+ -able → 可以按等級擴展的"},{"en":"Innovation","pos":"n.","zh":"創新","ex":"Continuous innovation is the key to staying competitive.","exZh":"持續創新是保持競爭力的關鍵。","ml":"💡","sc":"🌟","root":"in-（向內）+ nov（新，novus）+ -ation → 帶入新事物＝創新"}]},{"id":"w4_wellness","icon":"🧘","name":"身心健康","en":"Wellness & Mindfulness","words":[{"en":"Meditate","pos":"v.","zh":"冥想、打坐","ex":"She meditates for 20 minutes every morning.","exZh":"她每天早上冥想20分鐘。","ml":"🧘","sc":"☀️","root":"medit（思量，與照料/治療同源）+ -ate → 沉思、冥想"},{"en":"Mindful","pos":"adj.","zh":"正念的、專注當下的","ex":"Being mindful means paying attention to the present moment.","exZh":"正念意味著專注於當下時刻。","ml":"🌸","sc":"💭","root":"mind（心智）+ -ful（充滿…的）→ 充滿留心覺察的"},{"en":"Detox","pos":"v./n.","zh":"排毒；數位排毒","ex":"A digital detox helps you reconnect with real life.","exZh":"數位排毒幫助你重新與現實生活連結。","ml":"📵","sc":"🌿","root":"de-（去除）+ tox（毒，希臘文 toxikon）→ 去除毒素"},{"en":"Balance","pos":"n.","zh":"平衡","ex":"Work-life balance is essential for long-term well-being.","exZh":"工作與生活的平衡對長期健康至關重要。","ml":"⚖️","sc":"🌈","root":"bi-/bal-（雙）+ lance（秤盤，來自 lanx）→ 雙邊秤盤保持平衡"},{"en":"Recharge","pos":"v.","zh":"充電、恢復精力","ex":"Take a vacation to recharge your energy.","exZh":"去度個假，為你的能量充電。","ml":"🔋","sc":"🌴","root":"re-（重新）+ charge（充能/負荷）→ 重新充能"},{"en":"Holistic","pos":"adj.","zh":"全面的、整體的","ex":"A holistic approach to health includes mind and body.","exZh":"全面的健康方法包括身心兩方面。","ml":"🌿","sc":"💚","root":"hol（整體，希臘文 holos）+ -istic → 整體性的"},{"en":"Chronic stress","pos":"n.","zh":"慢性壓力","ex":"Chronic stress can lead to serious health problems.","exZh":"慢性壓力可能導致嚴重的健康問題。","ml":"😰","sc":"🧠","root":"chron（時間，希臘文）+ stress（壓力）→ 長期持續存在的壓力"},{"en":"Self-care","pos":"n.","zh":"自我照顧","ex":"Self-care includes getting enough sleep and eating well.","exZh":"自我照顧包括充足的睡眠和良好的飲食。","ml":"🛁","sc":"❤️","root":"self（自己）+ care（照顧）→ 照顧自己"},{"en":"Gratitude journal","pos":"n.","zh":"感恩日記","ex":"Writing in a gratitude journal improves your mood.","exZh":"寫感恩日記可以改善你的心情。","ml":"📔","sc":"✨","root":"grat（感謝，gratus）+ journal（日誌，來自 diurnalis 每日的）→ 每日感恩紀錄"},{"en":"Boundaries","pos":"n.","zh":"界限","ex":"Setting boundaries protects your mental energy.","exZh":"設定界限保護你的心理能量。","ml":"🚧","sc":"💪","root":"bound（邊界，來自 bodne）+ -ary（複數 -aries）→ 多重的界線"}]},{"id":"w4_economy","icon":"📊","name":"經濟貿易","en":"Economics & Trade","words":[{"en":"Tariff","pos":"n.","zh":"關稅","ex":"The government imposed tariffs on imported goods.","exZh":"政府對進口商品徵收關稅。","ml":"🚢","sc":"💰","root":"源自阿拉伯文 taʿrīf「通知/公告價目」→ 關稅"},{"en":"Supply chain","pos":"n.","zh":"供應鏈","ex":"The pandemic disrupted global supply chains.","exZh":"疫情打亂了全球供應鏈。","ml":"🔗","sc":"🌍","root":"supply（供給，來自 supplere 補足）+ chain（鏈）→ 補給的鏈條"},{"en":"Deficit","pos":"n.","zh":"赤字、逆差","ex":"The country has been running a trade deficit for years.","exZh":"該國多年來一直存在貿易逆差。","ml":"📉","sc":"😟","root":"de-（缺少）+ fic（做，facere）→ 未做到足夠＝赤字"},{"en":"Export","pos":"v./n.","zh":"出口","ex":"Taiwan exports a large number of semiconductors.","exZh":"台灣出口大量半導體。","ml":"✈️","sc":"🌍","root":"ex-（向外）+ port（攜帶，portare）→ 向外攜帶出去＝出口"},{"en":"Gross domestic product","pos":"n.","zh":"國內生產總值","ex":"GDP measures a country's total economic output.","exZh":"GDP衡量一個國家的總體經濟產出。","ml":"📊","sc":"🏛️","root":"gross（整體的）+ domestic（國內的，domus 家）+ product（產出）→ 國內生產的總和"},{"en":"Recession","pos":"n.","zh":"經濟衰退","ex":"The country entered a recession after the financial crisis.","exZh":"金融危機後，該國陷入了經濟衰退。","ml":"📉","sc":"😟","root":"re-（向後）+ cess（走，cedere）+ -ion → 向後退＝經濟衰退"},{"en":"Fluctuate","pos":"v.","zh":"波動","ex":"Exchange rates fluctuate based on global events.","exZh":"匯率根據全球事件波動。","ml":"〰️","sc":"💹","root":"fluctu（波浪，來自 fluere 流動）+ -ate → 像波浪起伏＝波動"},{"en":"Emerging market","pos":"n.","zh":"新興市場","ex":"Investors are looking at emerging markets for growth.","exZh":"投資者正在關注新興市場的成長機會。","ml":"🌱","sc":"📈","root":"e-（向外）+ merg（浮現，mergere）+ -ing → 逐漸浮現出來的市場"},{"en":"Fiscal policy","pos":"n.","zh":"財政政策","ex":"The government changed its fiscal policy to boost the economy.","exZh":"政府改變財政政策以提振經濟。","ml":"🏛️","sc":"📊","root":"fisc（國庫，拉丁 fiscus）+ -al → 與國庫有關的政策"},{"en":"Monopoly","pos":"n.","zh":"壟斷","ex":"Antitrust laws prevent large companies from forming monopolies.","exZh":"反壟斷法阻止大公司形成壟斷。","ml":"🏭","sc":"⚖️","root":"mono-（單一，希臘文）+ poly（販賣，polein）→ 單獨販售的權利＝壟斷"}]},{"id":"w4_language","icon":"📝","name":"語言表達","en":"Language & Expression","words":[{"en":"Articulate","pos":"adj./v.","zh":"表達清晰的；清楚表達","ex":"She is very articulate when presenting her ideas.","exZh":"她在表達想法時非常清晰。","ml":"🎤","sc":"💬","root":"articul（關節，articulus）+ -ate → 把話語像關節般清楚接合表達"},{"en":"Concise","pos":"adj.","zh":"簡潔的","ex":"A concise email is more effective than a long one.","exZh":"簡潔的電子郵件比冗長的更有效。","ml":"✂️","sc":"📧","root":"con-（完全）+ cis（切，caedere）+ -e → 完全切除多餘的＝簡潔的"},{"en":"Fluent","pos":"adj.","zh":"流利的","ex":"She is fluent in English, French, and Japanese.","exZh":"她能流利地說英語、法語和日語。","ml":"🌍","sc":"🗣️","root":"flu（流動，fluere）+ -ent → 像水流般流暢的"},{"en":"Paraphrase","pos":"v.","zh":"改述、換句話說","ex":"Can you paraphrase that in simpler terms?","exZh":"你能用更簡單的詞改述一下嗎？","ml":"🔄","sc":"💬","root":"para-（旁邊）+ phrase（片語，希臘文 phrasis）→ 用旁邊的話重新表達"},{"en":"Context","pos":"n.","zh":"脈絡、上下文","ex":"Always consider the context before responding.","exZh":"在回應之前，請始終考慮上下文。","ml":"📖","sc":"🧠","root":"con-（共同）+ text（編織，texere）→ 共同編織的脈絡"},{"en":"Rhetoric","pos":"n.","zh":"修辭、說服技巧","ex":"Political speeches often rely on powerful rhetoric.","exZh":"政治演講通常依賴強有力的修辭。","ml":"🎭","sc":"🎤","root":"希臘文 rhetorike「演說的技藝」→ 修辭"},{"en":"Elaborate","pos":"v.","zh":"詳細說明","ex":"Please elaborate on your point with an example.","exZh":"請用一個例子詳細說明你的觀點。","ml":"🔍","sc":"📝","root":"e-（向外）+ labor（工作）+ -ate → 向外多花工夫＝詳細闡述"},{"en":"Convey","pos":"v.","zh":"傳達、表達","ex":"Good writing conveys ideas clearly and efficiently.","exZh":"好的寫作能清晰有效地傳達想法。","ml":"📨","sc":"💡","root":"con-（共同）+ vey（路，via）→ 一起走過去傳送＝傳達"},{"en":"Nuance","pos":"n.","zh":"細微差異","ex":"Understanding nuance is key to advanced language learning.","exZh":"理解細微差異是高級語言學習的關鍵。","ml":"🎨","sc":"🔍","root":"源自法文 nuer「使漸層」，來自 nue（雲）→ 如雲一般的細微差異"},{"en":"Idiom","pos":"n.","zh":"慣用語、成語","ex":"Learning idioms helps you sound more natural in English.","exZh":"學習慣用語幫助你在英語中聽起來更自然。","ml":"💬","sc":"🌟","root":"希臘文 idioma「個人特有的用法」（idios 自己的）→ 慣用語"}]},{"id":"w4_travel2","icon":"🗺️","name":"深度旅遊","en":"Deep Travel Experience","words":[{"en":"Immerse","pos":"v.","zh":"沉浸、深入體驗","ex":"Immerse yourself in the local culture to truly understand it.","exZh":"沉浸在當地文化中才能真正理解它。","ml":"🌊","sc":"🌍","root":"im-（向內）+ mers（浸，mergere）→ 浸入其中＝沉浸"},{"en":"Offbeat","pos":"adj.","zh":"非主流的、冷門的","ex":"She prefers offbeat destinations over tourist traps.","exZh":"她更喜歡冷門目的地而非觀光陷阱。","ml":"🗺️","sc":"🏕️","root":"off（偏離）+ beat（節拍）→ 偏離常軌節拍的＝非主流的"},{"en":"Nomadic","pos":"adj.","zh":"遊牧的；四處流浪的","ex":"He lives a nomadic lifestyle, moving to a new city each month.","exZh":"他過著遊牧生活，每個月搬到一個新城市。","ml":"🎒","sc":"🌍","root":"nomad（遊牧民，希臘文 nomas）+ -ic → 遊牧的"},{"en":"Landmark","pos":"n.","zh":"地標","ex":"The Eiffel Tower is Paris's most iconic landmark.","exZh":"艾菲爾鐵塔是巴黎最具代表性的地標。","ml":"🗼","sc":"📸","root":"land（土地）+ mark（標記）→ 土地上的標記＝地標"},{"en":"Authentic","pos":"adj.","zh":"正宗的、真實的","ex":"She looks for authentic local food when traveling.","exZh":"她旅行時尋找正宗的當地食物。","ml":"⭐","sc":"🍜","root":"希臘文 authentikos「原創的」→ 原創真實的＝正宗的"},{"en":"Spontaneous","pos":"adj.","zh":"自發的、臨時起意的","ex":"Being spontaneous makes travel more exciting.","exZh":"隨性而為讓旅行更加刺激。","ml":"✨","sc":"🎲","root":"spont（自願，sponte）+ -aneous → 自發、隨性的"},{"en":"Jet lag","pos":"n.","zh":"時差","ex":"It took her three days to recover from jet lag.","exZh":"她花了三天才從時差中恢復。","ml":"✈️","sc":"😴","root":"jet（噴射機）+ lag（落後）→ 因搭機而落後的時差"},{"en":"Cultural shock","pos":"n.","zh":"文化衝擊","ex":"Moving abroad often causes a period of cultural shock.","exZh":"移居海外往往會引起一段時間的文化衝擊。","ml":"😲","sc":"🌍","root":"culture（文化）+ shock（衝擊）→ 文化上的衝擊"},{"en":"Sustainable tourism","pos":"n.","zh":"永續旅遊","ex":"Sustainable tourism protects local environments and communities.","exZh":"永續旅遊保護當地環境和社區。","ml":"♻️","sc":"🌿","root":"sus-（向上）+ tain（撐持）+ tour（巡迴，來自 tornus 旋轉）+ -ism → 可持續的旅遊"},{"en":"Panoramic","pos":"adj.","zh":"全景的","ex":"The hotel room had a panoramic view of the mountains.","exZh":"這間飯店房間擁有山脈的全景視野。","ml":"🏔️","sc":"🪟","root":"pan-（全部，希臘文）+ horama（景象，horan 看）→ 全景的"}]},{"id":"w4_creative","icon":"✨","name":"創意思考","en":"Creativity & Innovation","words":[{"en":"Brainstorm","pos":"v.","zh":"腦力激盪","ex":"Let us brainstorm some ideas before the meeting.","exZh":"讓我們在會議前進行一些腦力激盪。","ml":"💭","sc":"💡","root":"brain（大腦）+ storm（風暴）→ 腦中激起的風暴＝腦力激盪"},{"en":"Prototype","pos":"n.","zh":"原型","ex":"We built a prototype to test the concept.","exZh":"我們建立了一個原型來測試這個概念。","ml":"🔨","sc":"🧪","root":"proto-（最初，希臘文）+ type（型態）→ 最初的型態＝原型"},{"en":"Iterate","pos":"v.","zh":"反覆修改、迭代","ex":"Design teams iterate on their ideas many times.","exZh":"設計團隊對他們的想法反覆修改多次。","ml":"🔄","sc":"🎨","root":"iter（再次，來自 iterum）+ -ate → 一再重複＝迭代"},{"en":"Divergent thinking","pos":"n.","zh":"發散性思維","ex":"Divergent thinking generates many solutions to one problem.","exZh":"發散性思維為一個問題產生多種解決方案。","ml":"🌟","sc":"🧠","root":"di-（分開）+ verg（轉向，vergere）+ -ent → 向不同方向發散的思考"},{"en":"Collaborate","pos":"v.","zh":"合作","ex":"Artists and engineers collaborate to create innovative products.","exZh":"藝術家和工程師合作創造創新產品。","ml":"🤝","sc":"💡","root":"co-（共同）+ labor（工作）+ -ate（動詞字尾）→ 一起工作＝合作"},{"en":"Conceptualize","pos":"v.","zh":"構思、概念化","ex":"It can be hard to conceptualize abstract ideas.","exZh":"將抽象想法概念化有時很困難。","ml":"🎨","sc":"💭","root":"con-（共同）+ cept（抓取，capere）+ -ualize → 把想法抓在一起＝構思"},{"en":"Feasible","pos":"adj.","zh":"可行的","ex":"Is this plan feasible within our budget?","exZh":"這個計劃在我們的預算內可行嗎？","ml":"✅","sc":"💰","root":"fea（做，facere）+ -ible → 可以被做到的＝可行的"},{"en":"Pivot","pos":"v.","zh":"轉向、轉型","ex":"The startup had to pivot when the market changed.","exZh":"當市場改變時，這家新創公司不得不轉型。","ml":"🔄","sc":"🚀","root":"源自古法文 pivot「樞紐」→ 繞著樞紐轉＝轉向"},{"en":"Disruption","pos":"n.","zh":"顛覆、破壞性創新","ex":"Digital disruption changed the music industry forever.","exZh":"數位顛覆永遠改變了音樂產業。","ml":"💥","sc":"🎵","root":"dis-（分開）+ rupt（破裂，rumpere）+ -ion → 使破裂分開＝顛覆"},{"en":"Refine","pos":"v.","zh":"精煉、改進","ex":"Keep refining your ideas until they are perfect.","exZh":"持續改進你的想法直到完美。","ml":"✨","sc":"🎯","root":"re-（反覆）+ fine（純度，finis 邊界）→ 反覆使其純淨精細＝精煉"}]}]];
 
 // ── 計算當前週次 ──
 function getWeekNumber() {
@@ -574,6 +291,11 @@ const {weekNum, weekIdx, topics: TOPICS} = getCurrentWeekData();
 const TODAY_IDX = new Date().getDay() % 7;
 const done = new Set();
 let topic = null, active = -1, playing = false, ptimer = null;
+let returnScreen = 'home'; // 記錄「返回」按鈕該回到哪個畫面（首頁或筆記本）
+
+// ── 全域單字索引，用於例句中點擊查詢單字 ──
+const WORD_INDEX = {};
+ALL_WEEKS.forEach(week=>week.forEach(t=>t.words.forEach(w=>{WORD_INDEX[w.en.toLowerCase()]=w})));
 
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0)}
@@ -629,11 +351,12 @@ function buildHome(){
         ?'<div class="badge b-done">✓ 已完成</div>'
         :`<div class="badge b-lock">第 ${i+1} 天</div>`;
     c.innerHTML=`<div class="tc-ico">${t.icon}</div><div class="tc-name">${t.name}</div><div class="tc-cnt">${t.words.length} 個單字</div>${badge}`;
-    c.addEventListener('click',()=>openTopic(t));
+    c.addEventListener('click',()=>{returnScreen='home';openTopic(t)});
     g.appendChild(c);
   });
   $('s-words').textContent=tw;
   $('s-done').textContent=td+'/7';
+  updateNotebookBadge();
 }
 
 function openTopic(t){
@@ -641,7 +364,7 @@ function openTopic(t){
   clearTimeout(ptimer);speechSynthesis&&speechSynthesis.cancel();
   $('l-ico').textContent=t.icon;$('l-name').textContent=t.name;
   $('nb-ico').textContent=t.icon;$('nb-zh').textContent=t.name;$('nb-en').textContent=t.en;
-  $('nb-week-tag').textContent=`第 ${weekNum} 週 · 第 ${weekIdx+1} 批`;
+  $('nb-week-tag').textContent=t.isReview?'📝 筆記字根複習課程':`第 ${weekNum} 週 · 第 ${weekIdx+1} 批`;
   $('done-box').style.display='none';
   $('play').textContent='▶ 自動播放';$('play').classList.remove('on');
   $('prog').style.width='0%';
@@ -650,16 +373,151 @@ function openTopic(t){
 
 function buildRings(){const r=$('rings');r.innerHTML='';for(let i=0;i<10;i++)r.innerHTML+='<div class="ring"></div>'}
 
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// 把例句拆成一個個可點擊的單字，方便查詢句子裡不會的字
+function tokenizeSentence(text){
+  if(!text)return'';
+  return text.split(/(\s+)/).map(tok=>{
+    if(/^\s+$/.test(tok))return tok;
+    const clean=tok.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g,'');
+    if(!clean)return escapeHtml(tok);
+    return `<span class="cw" data-w="${clean.replace(/"/g,'&quot;')}">${escapeHtml(tok)}</span>`;
+  }).join('');
+}
+
 function buildList(){
   const l=$('nb-list');l.innerHTML='';
   topic.words.forEach((w,i)=>{
     const row=document.createElement('div');
     row.className='row';row.id='r'+i;
-    row.innerHTML=`<div class="arr">➤</div><div class="ml">${w.ml}</div><div class="rc"><div class="rmain"><span class="rnum">${i+1}.</span>${w.en}<span class="rpos">${w.pos}</span></div><div class="rzh">${w.zh}</div><div class="rex">${w.ex}</div><div class="rexzh">${w.exZh}</div></div><div class="sc">${w.sc}</div>`;
-    row.addEventListener('click',()=>{if(playing)stopPlay();sel(i)});
+    const rootHtml=w.root?`<div class="rroot">🧩 ${escapeHtml(w.root)}</div>`:'';
+    row.innerHTML=`<div class="arr">➤</div><div class="ml">${w.ml}</div><div class="rc"><div class="rmain"><span class="rnum">${i+1}.</span>${w.en}<span class="rpos">${w.pos}</span></div><div class="rzh">${w.zh}</div>${rootHtml}<div class="rex">${tokenizeSentence(w.ex)}</div><div class="rexzh">${w.exZh}</div></div><div class="sc">${w.sc}</div>`;
+    row.addEventListener('click',(e)=>{
+      const cw=e.target.closest('.cw');
+      if(cw){openWordPopup(cw.dataset.w);return}
+      if(playing)stopPlay();
+      sel(i);
+    });
     l.appendChild(row);
   });
 }
+
+// ══════════════ 筆記本（當日／當週）══════════════
+const NOTES_KEY='dailyEnglishNotes_v1';
+
+function loadNotes(){try{return JSON.parse(localStorage.getItem(NOTES_KEY)||'{}')}catch(e){return{}}}
+function saveNotes(notes){try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes))}catch(e){}}
+function dateKey(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`}
+
+function addNoteWord(entry){
+  const notes=loadNotes();
+  const key=dateKey(new Date());
+  if(!notes[key])notes[key]=[];
+  const exists=notes[key].some(w=>w.en.toLowerCase()===entry.en.toLowerCase());
+  if(!exists){entry.addedAt=Date.now();notes[key].push(entry);saveNotes(notes)}
+  return!exists;
+}
+
+function getWeekDates(base){
+  const d=new Date(base);const day=d.getDay();
+  const sunday=new Date(d);sunday.setDate(d.getDate()-day);
+  const dates=[];for(let i=0;i<7;i++){const dd=new Date(sunday);dd.setDate(sunday.getDate()+i);dates.push(dd)}
+  return dates;
+}
+
+function getTodayNotes(){const notes=loadNotes();return notes[dateKey(new Date())]||[]}
+
+function getWeekNotes(){
+  const notes=loadNotes();
+  const dates=getWeekDates(new Date());
+  let all=[];
+  dates.forEach(d=>{const k=dateKey(d);if(notes[k])all=all.concat(notes[k])});
+  const seen=new Set(),result=[];
+  all.forEach(w=>{const k=w.en.toLowerCase();if(!seen.has(k)){seen.add(k);result.push(w)}});
+  return result;
+}
+
+function updateNotebookBadge(){const el=$('nb-count-badge');if(el)el.textContent=getWeekNotes().length}
+
+function noteRowHtml(w){
+  const rootHtml=w.root?`<div class="rroot">🧩 ${escapeHtml(w.root)}</div>`:'';
+  return`<div class="note-row"><div class="note-en">${escapeHtml(w.en)}<span class="rpos">${w.pos||''}</span></div><div class="note-zh">${escapeHtml(w.zh||'')}</div>${rootHtml}</div>`;
+}
+
+function buildNotebookScreen(){
+  $('nb-today-date').textContent=new Date().toLocaleDateString('zh-TW',{month:'long',day:'numeric',weekday:'short'});
+  const today=getTodayNotes();
+  $('nb-today-list').innerHTML=today.length?today.map(noteRowHtml).join(''):'<div class="nb-empty">今天還沒有筆記單字，去例句裡點點看不會的字吧！</div>';
+
+  const week=getWeekNotes();
+  $('nb-week-list').innerHTML=week.length?week.map(noteRowHtml).join(''):'<div class="nb-empty">本週還沒有筆記單字。</div>';
+  $('nb-gen-review').disabled=week.length===0;
+}
+
+// ── 單字彈出視窗（點擊例句中的字）──
+function openWordPopup(word){
+  const key=word.toLowerCase();
+  const found=WORD_INDEX[key];
+  const overlay=$('word-pop-overlay');
+  $('wp-word').textContent=found?found.en:word;
+  $('wp-pos').textContent=found?(found.pos||''):'';
+  if(found){
+    $('wp-zh').textContent=found.zh;
+    $('wp-root').innerHTML=found.root?`🧩 ${escapeHtml(found.root)}`:'（尚無字根資料）';
+    $('wp-input-wrap').style.display='none';
+  }else{
+    $('wp-zh').textContent='本庫尚未收錄這個字，你可以自己寫下意思：';
+    $('wp-root').innerHTML='';
+    $('wp-input-wrap').style.display='block';
+    $('wp-input').value='';
+  }
+  $('wp-added-msg').style.display='none';
+  overlay.dataset.word=found?found.en:word;
+  overlay.dataset.found=found?'1':'0';
+  overlay.style.display='flex';
+}
+
+$('wp-close').addEventListener('click',()=>{$('word-pop-overlay').style.display='none'});
+$('word-pop-overlay').addEventListener('click',(e)=>{if(e.target.id==='word-pop-overlay')$('word-pop-overlay').style.display='none'});
+$('wp-add').addEventListener('click',()=>{
+  const overlay=$('word-pop-overlay');
+  const isFound=overlay.dataset.found==='1';
+  const wEn=overlay.dataset.word;
+  let entry;
+  if(isFound){
+    const found=WORD_INDEX[wEn.toLowerCase()];
+    entry={en:found.en,pos:found.pos||'',zh:found.zh,root:found.root||''};
+  }else{
+    const meaning=$('wp-input').value.trim();
+    if(!meaning){$('wp-input').focus();return}
+    entry={en:wEn,pos:'',zh:meaning,root:''};
+  }
+  addNoteWord(entry);
+  $('wp-added-msg').style.display='block';
+  updateNotebookBadge();
+});
+
+$('open-notebook').addEventListener('click',()=>{buildNotebookScreen();show('notebook')});
+$('nb-back').addEventListener('click',()=>{show('home');buildHome()});
+$('nb-gen-review').addEventListener('click',()=>{
+  const week=getWeekNotes();
+  if(!week.length)return;
+  const reviewTopic={
+    id:'review_'+dateKey(new Date()),
+    icon:'📝',name:'本週筆記複習',en:'Weekly Notebook Review — Word Roots',
+    isReview:true,
+    words:week.map(w=>({
+      en:w.en,pos:w.pos||'',zh:w.zh||'',
+      ex:w.root?('字根小提示：'+w.root):'這是你自己加入筆記的單字，多複習幾次就會記住！',
+      exZh:w.zh||'',
+      root:w.root||'（尚無字根資料，可以自己查查看字源喔！）',
+      ml:'📝',sc:'⭐'
+    }))
+  };
+  returnScreen='notebook';
+  openTopic(reviewTopic);
+});
 
 function sel(i, onDone){
   document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));
@@ -761,6 +619,7 @@ function buildCalendar() {
       buildCalendar();
       // Open that day's topic
       const info = getTopicForDate(date);
+      returnScreen='home';
       openTopic(info.topic);
     });
     grid.appendChild(btn);
@@ -778,7 +637,12 @@ $('cal-next').addEventListener('click', () => {
   buildCalendar();
 });
 
-$('back').addEventListener('click',()=>{stopPlay();show('home');buildHome()});
+$('back').addEventListener('click',()=>{
+  stopPlay();
+  if(returnScreen==='notebook'){buildNotebookScreen();show('notebook')}
+  else{show('home');buildHome()}
+  returnScreen='home';
+});
 $('play').addEventListener('click',togglePlay);
 $('rst').addEventListener('click',()=>{stopPlay();active=-1;document.querySelectorAll('.row').forEach(r=>r.classList.remove('on'));$('prog').style.width='0%';$('done-box').style.display='none'});
 
